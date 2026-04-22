@@ -1,0 +1,265 @@
+
+    ___  __ _         __   ____         
+   / _ )/ /(_)__  ___/ /  / __/_ _____ 
+  / _  / // / _ \/ _  /  / _// // / -_)
+ /____/_//_/_//_/\_,_/  /___/\_, /\__/ 
+                            /___/      
+==================================================================
+       T H E   B L I N D   E Y E   F I E L D   M A N U A L
+==================================================================
+       FOR OPERATIVES ONLY — MEMORIZE AND DESTROY
+       REV 1.0 | JAVANET FRAMEWORK
+==================================================================
+
+Operative,
+
+Welcome to the other side of the firewall.
+
+You are not a defender. You are not bound by their rules,
+their protocols, or their clearance hierarchies. You exist
+in the spaces between their monitors, in the gaps between
+their log entries, in the seconds between their heartbeats.
+
+This manual will teach you how to exploit every weakness in
+a Javanet network. How to crack their puzzles. How to slip
+through their defenses. How to make their entire facility
+yours without them ever knowing you were there.
+
+Read carefully. There are no second chances in the field.
+
+------------------------------------------------------------------
+SECTION 1: YOUR OFFENSIVE TOOLKIT
+------------------------------------------------------------------
+
+RECONNAISSANCE:
+  - Scanner: Broadcast probe to find all Javanet computers
+    in modem range. Returns their faction name and ID.
+  - Interceptor: Raw modem sniffer. Captures ALL traffic
+    on any channel you choose. Including their signed
+    internal messages.
+
+BREACH:
+  - Cracker: The puzzle engine. You vs their security tier.
+    Tier 1-2: Easy, fast. Tier 3-4: Hard, long.
+    Tier 5: Near impossible. Choose your targets.
+  - HMAC Cracker: If you capture a signed message with
+    the Interceptor, this tries to brute-force their
+    shared secret. Low chance, but game-changing if it works.
+
+EXPLOITATION:
+  - Card Spoofer: Clone, forge, or create burn cards.
+  - Payload Deployer: Push lockout, worm, backdoor, or
+    agent scripts to compromised machines.
+  - Worm Commander: Control your deployed worms. Authorize
+    spread to new targets with mini-puzzles.
+  - Agent Control: Manage stealth event hooks on targets.
+
+DISRUPTION:
+  - Signal Jammer: Flood modem traffic. Causes timeouts
+    and lag across their entire network.
+  - Keylogger: Disguise as a door terminal. Capture every
+    card swipe. Get disk IDs for cloning.
+
+------------------------------------------------------------------
+SECTION 2: THE ATTACK PLAYBOOK
+------------------------------------------------------------------
+
+PHASE 1 — RECONNAISSANCE (5-10 min)
+  1. Set up a hidden terminal away from the facility
+  2. Run Scanner to find all targets
+  3. Run Interceptor to capture traffic patterns
+  4. Note: which computers are doors? Which is mainframe?
+  5. Map the network before you touch anything
+
+PHASE 2 — INITIAL ACCESS (varies)
+  Option A: PUZZLE CRACK
+    - Target a low-tier door (T1-T2)
+    - Solve the puzzle, gain a session token
+    - Session lasts 5 minutes — work fast
+
+  Option B: CARD FORGERY
+    - If you captured card auth traffic with Interceptor,
+      use Card Spoofer to clone a card
+    - Walk up to a door and swipe like you belong there
+    - Clone = undetectable. Forge = flagged by IDS.
+
+  Option C: KEYLOGGER TRAP
+    - Place a computer near a door they use
+    - Install keylogger module, set fake zone name
+    - Wait for someone to swipe their card
+    - Clone the captured disk ID
+
+  Option D: BURN CARD
+    - Solve a T2 puzzle to create a one-time-use card
+    - Single swipe, then the card self-destructs
+    - Completely untraceable
+
+PHASE 3 — ESTABLISH PERSISTENCE
+  1. Deploy AGENT first (stealth priority)
+     - Hooks os.pullEventRaw
+     - Reports card swipes back to you
+     - Nearly invisible to antivirus scans
+  2. Deploy BACKDOOR second
+     - Listens for remote commands
+     - Can open doors, reboot, exfiltrate data
+  3. Deploy WORM only when ready to go loud
+     - Probes adjacent computers automatically
+     - YOU control spread via Worm Commander
+     - Each spread requires a mini-puzzle (T1-T2)
+
+PHASE 4 — ESCALATION
+  - Use worm network to reach deeper targets
+  - Exfiltrate config files, personnel lists, logs
+  - Clone admin-level cards from captured data
+  - Crack the mainframe (usually T4-T5)
+
+PHASE 5 — TAKEOVER
+  - Deploy LOCKOUT on all infected machines at once
+  - Your faction logo, your colors, your message
+  - Every screen in the facility shows YOUR face
+  - The defenders are blind
+
+------------------------------------------------------------------
+SECTION 3: SECRETS THEY DON'T KNOW
+------------------------------------------------------------------
+
+SECRET 1: STEALTH PROTOCOL
+  The Interceptor and Scanner can use raw modem.transmit()
+  instead of rednet. Standard IDS cannot see raw modem
+  traffic. Only the Deep Scanner module catches it — and
+  most defenders don't install it. Use stealth mode for
+  all reconnaissance to stay invisible.
+
+SECRET 2: THE COOLDOWN EXPLOIT
+  Cooldowns are per-attacker, per-resource. If you have
+  TWO computers, you can attack from both simultaneously.
+  Computer A gets cooldown? Switch to Computer B. Double
+  your attack speed, and the logs show different source IDs.
+
+SECRET 3: BURN CARDS ARE UNTRACEABLE
+  Forged cards show up as unknown IDs in the IDS. But burn
+  cards self-destruct after one use AND leave no trace in
+  the personnel database. The only way to catch a burn card
+  is if the IDS happens to catch the auth in real-time.
+
+SECRET 4: AGENT VS WORM — CHOOSE WISELY
+  - Agent: Silent. Nearly undetectable. Good for long-term
+    intelligence gathering. Survives antivirus scans better.
+  - Worm: Loud. Spreads fast. Good for takeovers. But the
+    dofile() hook in startup.lua is easy for defenders to
+    find with Integrity Check.
+  Use agents for recon. Use worms for the final push.
+
+SECRET 5: THE HONEYPOT TELL
+  Defenders set up honeypots — fake terminals with tempting
+  names like "ADMIN_CONSOLE" or "VAULT_CONTROL." How to spot
+  them: probe the target, then wait 30+ seconds. Honeypots
+  respond SLOWLY on purpose to waste your time. Real terminals
+  respond in under 5 seconds. If it's slow, it's a trap.
+
+SECRET 6: MAINFRAME CRACK SEQUENCE
+  The mainframe is usually T4-T5 security. But individual
+  DOORS on the mainframe's network might only be T1-T2.
+  Crack a door first, deploy a worm, spread to the mainframe
+  from inside the network. Easier than a direct crack.
+
+SECRET 7: THE REPLAY WINDOW
+  Signed messages have a 10-second replay window. If you
+  capture a signed "open door" message with the Interceptor,
+  you have 10 seconds to replay it with the Replayer module.
+  This bypasses the puzzle entirely. Timing is everything.
+
+SECRET 8: LOCKOUT PERSISTENCE
+  The lockout payload traps os.pullEventRaw. Even Ctrl+T
+  only gets a taunt message and a 2-second delay before
+  breaking out. During those 2 seconds, a defender can't
+  do anything. If you time a lockout with a worm spread,
+  defenders can't respond fast enough.
+
+SECRET 9: DUAL APPROACH
+  Run your attack terminal with BOTH offense AND defense
+  modules. Put a Firewall on your own hacking station.
+  If they try to trace or counter-hack you, YOUR firewall
+  blocks their attempts. You're not just attacking — you're
+  defending your attack position.
+
+SECRET 10: THE JAMMER DISTRACTION
+  Signal Jammer floods one modem channel. Defenders will
+  rush to investigate the "network issues" while you
+  quietly crack a door on a different channel. Use the
+  jammer as a feint, not a primary weapon.
+
+------------------------------------------------------------------
+SECTION 4: PUZZLE TIPS
+------------------------------------------------------------------
+
+TIER 1 — PATTERN MATCH (15-30 sec, 5 attempts)
+  - Just look for the repeating pattern
+  - You have 5 tries — experiment freely
+  - Fastest tier. Don't overthink it.
+
+TIER 2 — PORT SEQUENCE (30-60 sec, 3 attempts)
+  - Find the mathematical rule: add, multiply, fibonacci
+  - Common rules: +3, +5, x2, x2+1, fib
+  - Check: does each number relate to the one before it?
+  - Only 3 attempts. Think before you type.
+
+TIER 3 — SIGNAL ROUTER (1-3 min, 3 attempts)
+  - 3 stages of increasing complexity
+  - Toggle gates ON/OFF to route signal from IN to OUT
+  - Start from the OUTPUT and work backwards
+  - Each stage is independent — solving one doesn't help next
+
+TIER 4 — CIPHER CRACK (3-5 min, 2 attempts)
+  - Caesar cipher with known shift value
+  - Tab opens frequency analysis tool
+  - Shift each letter BACKWARDS by the shift amount
+  - Example: shift +3, encrypted "G" = plain "D"
+  - Only 2 attempts. Get it right.
+
+TIER 5 — SYSTEM SIEGE (5-10 min, 1 attempt per phase)
+  - Chain of T2 -> T3 -> T4. Fail ANY and start over.
+  - Full regeneration on failure — can't memorize answers
+  - This is the boss fight. Bring coffee.
+  - Tip: the time limit is shared across ALL phases.
+    Rush the T2, take your time on T4.
+
+------------------------------------------------------------------
+SECTION 5: RECOMMENDED LOADOUTS
+------------------------------------------------------------------
+
+RECON STATION:
+  Modules: Scanner + Interceptor + Deep Scanner
+  Purpose: Map the target network silently
+  Duration: 10-15 min before moving to attack
+
+ATTACK STATION:
+  Modules: Cracker + Payload Deployer + Worm Commander
+  Purpose: Active breach and exploitation
+  Add: Firewall (defend your position)
+
+FORGERY STATION:
+  Modules: Card Spoofer + Keylogger + Interceptor
+  Purpose: Card-based infiltration
+  Location: Near target facility doors
+
+COMMAND CENTER:
+  Modules: Worm Commander + Agent Control + Sentinel
+  Purpose: Manage deployed assets across the network
+  Location: Hidden, away from the target
+
+SCORCHED EARTH:
+  Modules: Signal Jammer + Cracker + Payload Deployer
+  Purpose: Maximum disruption. Jam + crack + lockout.
+  Warning: This is LOUD. They will know you're there.
+
+------------------------------------------------------------------
+
+Remember: patience is your greatest weapon. A rushed attack
+gets detected. A slow, methodical infiltration takes over
+the entire network before anyone notices.
+
+Be the ghost. Be the shadow. Be the Blind Eye.
+
+                    *** BURN AFTER READING ***
+==================================================================

@@ -1,0 +1,217 @@
+==================================================================
+     N . O . V . A     D E F E N S E     H A N D B O O K
+         NETWORK  OPERATIONS  VANGUARD  AUTHORITY
+==================================================================
+       CLASSIFICATION: DEFENDER EYES ONLY
+       REVISION: 1.0 | JAVANET FRAMEWORK
+==================================================================
+
+OPERATIVE,
+
+If you are reading this, you have been entrusted with the
+defense of a Javanet network. The threats are real. Rogue
+factions — insurgents, hackers, saboteurs — are constantly
+probing for weaknesses. Your job is to find them first.
+
+This handbook covers everything you need to know to keep
+your network locked down, your personnel safe, and your
+enemies frustrated.
+
+Read it. Memorize it. Then delete it.
+
+------------------------------------------------------------------
+SECTION 1: YOUR DEFENSIVE ARSENAL
+------------------------------------------------------------------
+
+PASSIVE MODULES (set and forget):
+  - Firewall: Auto-blocks IPs after failed crack attempts.
+    Configure maxAttempts=3 and blockDuration=300 minimum.
+  - IDS (Intrusion Detection): Logs ALL suspicious traffic.
+    ALWAYS have this running on at least one terminal.
+  - Integrity Check: Watches startup.lua for modifications.
+    If this fires, you have been compromised. Act fast.
+
+ACTIVE MODULES (require your input):
+  - Tracer: Solve a Tier 2 puzzle to identify an attacker.
+    This reveals their computer ID and label.
+  - Counter-Hack: Race the attacker. Solve the same puzzle
+    faster and they get locked out for 5 minutes.
+  - Antivirus: Scans for worms, agents, backdoors.
+    Run this regularly on ALL network computers.
+
+MONITORING:
+  - Sentinel: Your dashboard. Shows threat level, active
+    attacks, infections, and network node count.
+  - Deep Scanner: Catches stealth traffic that IDS misses.
+    The advanced attackers use raw modem — this sees them.
+
+------------------------------------------------------------------
+SECTION 2: THREAT TYPES
+------------------------------------------------------------------
+
+PROBE SCAN:
+  What: Attacker sends broadcast to find your computers.
+  Signs: IDS shows "PROBE from #XXX"
+  Response: Note the ID. They're mapping your network.
+  Risk: Low — but it means an attack is coming.
+
+CRACK ATTEMPT:
+  What: Puzzle-based attack on a resource.
+  Signs: IDS shows "CRACK ATTEMPT from #XXX"
+  Response: Use Tracer to identify. Counter-Hack if active.
+  Risk: Medium — if they solve the puzzle, they're in.
+
+PAYLOAD DEPLOYMENT:
+  What: Worm, agent, lockout, or backdoor installed.
+  Signs: IDS shows "DEPLOY from #XXX". Files appear.
+  Response: Antivirus scan immediately. Quarantine node.
+  Risk: HIGH — they have persistent access.
+
+FORGED CARDS:
+  What: Fake ID cards created to bypass doors.
+  Signs: IDS flags unknown card IDs in auth logs.
+  Response: Revoke suspicious cards. Enable two-factor.
+  Risk: Medium — gives them physical access.
+
+SIGNAL JAMMING:
+  What: Modem flooded with junk traffic.
+  Signs: Massive lag. Network timeouts. Modem overload.
+  Response: Deep Scanner will show it. Physical removal.
+  Risk: Medium — disrupts but doesn't breach.
+
+------------------------------------------------------------------
+SECTION 3: TIPS THEY DON'T WANT YOU TO KNOW
+------------------------------------------------------------------
+
+TIP 1: HONEYPOTS WIN WARS
+  Set up a terminal with a tempting name like "ADMIN_CONSOLE"
+  or "VAULT_CONTROL" using the Honeypot module. When attackers
+  probe and try to crack it, they waste time on a fake target
+  while you get a silent alarm with their ID. Place these near
+  the network edge for early warning.
+
+TIP 2: LAYERED SECURITY TIERS
+  Don't make everything Tier 5. Instead:
+  - Outer doors: Tier 1-2 (let them in to the trap zone)
+  - Inner doors: Tier 3-4 (the real defense)
+  - Critical systems: Tier 5 (basically impossible)
+  This creates a funnel that wastes attacker time and gives
+  you more chances to detect and trace them.
+
+TIP 3: THE FIREWALL ESCALATION SECRET
+  Cooldowns are escalating: 30s -> 60s -> 120s -> 240s ->
+  capped at 600s. After 4 failed attempts, an attacker has
+  to wait 10 MINUTES. The Firewall + escalating cooldown is
+  your best passive defense. Don't underestimate it.
+
+TIP 4: CHECK STARTUP.LUA REGULARLY
+  Worms hook into startup.lua with a dofile() call. The
+  Integrity Check module watches for this automatically,
+  but you should also manually inspect startup.lua on any
+  computer that acts strange. Look for:
+    dofile("/.sys_jnet.lua")
+    dofile("/.sys.lua")
+  If you see either line, the machine is compromised.
+
+TIP 5: QUARANTINE FIRST, PURGE SECOND
+  When you find an infection, quarantine the node FIRST to
+  prevent further spread. Then scan and purge. If you purge
+  while the worm is still connected, it might re-infect from
+  an adjacent node before you finish cleanup.
+
+TIP 6: COUNTER-HACK TIMING
+  The Counter-Hack module lets you solve the same puzzle the
+  attacker is working on. If you finish first, they get locked
+  out for 5 minutes. The key: START THE COUNTER IMMEDIATELY.
+  You have the defender's advantage — you choose when to start.
+
+TIP 7: WATCH THE RAW MODEM
+  Standard IDS only sees rednet traffic. Advanced attackers use
+  raw modem.transmit() to avoid detection. The Deep Scanner
+  module catches this. If you're facing a sophisticated threat,
+  Deep Scanner is mandatory.
+
+TIP 8: TWO-FACTOR ON CRITICAL DOORS
+  Admins can enable PIN + card on any door via the Admin Panel.
+  This means even a cloned or forged card won't work without
+  knowing the PIN. Use this on vault doors and server rooms.
+
+TIP 9: ARCHIVE YOUR LOGS
+  The Network Archive stores documents server-wide. Create a
+  "Security Logs" folder and periodically save IDS snapshots
+  there. This gives you a history even if logs rotate out.
+
+TIP 10: THE WORM SPREAD LIMIT
+  Worms can ONLY spread on the same network. If you have a
+  physically separate network (different modem channels or
+  no wireless connection), worms cannot jump to it. Use this
+  to create air-gapped backup systems.
+
+------------------------------------------------------------------
+SECTION 4: EMERGENCY PROCEDURES
+------------------------------------------------------------------
+
+NETWORK-WIDE BREACH:
+  1. Hit the Panic Button (sets state to EMERGENCY)
+  2. Lock down ALL zones via Lockdown Control
+  3. Identify infected nodes via Sentinel
+  4. Quarantine infected nodes
+  5. Run Antivirus on each quarantined node
+  6. Purge confirmed infections
+  7. Check startup.lua on ALL computers
+  8. Reset facility state when clear
+
+MAINFRAME UNDER ATTACK:
+  1. The mainframe is the highest-value target
+  2. It should ALWAYS have Firewall + IDS + Sentinel
+  3. Set its security tier to 5 (Fortress)
+  4. If compromised, shut it down (Ctrl+T) and clean manually
+  5. Re-enter the shared secret on restart
+
+CARD FORGERY DETECTED:
+  1. IDS flags auth from unknown card IDs
+  2. Check personnel list for matching names
+  3. Revoke suspicious cards via Admin Panel
+  4. Enable two-factor on affected doors
+  5. Issue new cards to legitimate personnel
+
+------------------------------------------------------------------
+SECTION 5: RECOMMENDED TERMINAL BUILDS
+------------------------------------------------------------------
+
+SECURITY STATION (defense focused):
+  Modules: IDS + Firewall + Sentinel + Tracer + Full Log
+  Location: Central, with monitor for dashboard
+  Purpose: Main defense nerve center
+
+DOOR TERMINAL (access control):
+  Modules: Card Reader + Door Lock
+  Location: Each access point
+  Optional: + Integrity Check (catches door tampering)
+
+ADMIN CONSOLE:
+  Modules: Admin Panel + Status Panel + Mail + Archive Browser
+  Location: Secure room, high clearance required
+  Purpose: Network management
+
+CONTAINMENT CHAMBER:
+  Modules: Entity Display + Entity Procedures + Siren
+  Location: Each containment cell
+  Optional: + Player Detector for occupancy
+
+EARLY WARNING POST:
+  Modules: Honeypot + Deep Scanner + IDS
+  Location: Network perimeter / common attack routes
+  Purpose: Detect and waste attacker resources
+
+------------------------------------------------------------------
+
+Remember: a determined attacker will always find a way in
+eventually. Your job isn't to make it impossible — it's to
+make it so painful and time-consuming that they give up, get
+caught, or make a mistake you can exploit.
+
+Stay vigilant. Stay sharp. Stay NOVA.
+
+                    *** END OF DOCUMENT ***
+==================================================================

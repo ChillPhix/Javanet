@@ -314,5 +314,27 @@ function M.stealthClose(modem, channel)
     if modem.isOpen(channel) then modem.close(channel) end
 end
 
+-- ============================================================
+-- Inline Message Verification
+-- For use when the event is already consumed from os.pullEvent
+-- ============================================================
+
+function M.verifyMessage(msg)
+    if type(msg) ~= "table" then return false, "not_table" end
+    if not msg.type or not msg.sig or not msg.ts or not msg.nonce then return false, "malformed" end
+    local secret = M.loadSecret()
+    if not secret then return false, "no_secret" end
+    local now = os.epoch("utc") / 1000
+    if math.abs(now - msg.ts) > M.NONCE_EXPIRY then return false, "stale" end
+    if seenNonces[msg.nonce] then return false, "replay" end
+    local sig = msg.sig
+    msg.sig = nil
+    local expected = M.hmac(secret, canonicalize(msg))
+    msg.sig = sig
+    if sig ~= expected then return false, "bad_sig" end
+    recordNonce(msg.nonce, msg.ts)
+    return true
+end
+
 _JNET_LOADED["jnet_proto"] = M
 return M

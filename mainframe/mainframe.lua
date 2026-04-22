@@ -624,26 +624,17 @@ local function main()
             local protocol = ev[4]
 
             if protocol == proto.PROTOCOL and type(msg) == "table" then
-                -- Signed internal message
-                local sid, verified = proto.receive(0)
-                -- Note: We already got the event, need to re-validate
-                -- The proto.receive in the event loop won't work well,
-                -- so we validate inline
-                if type(msg) == "table" and msg.type and msg.sig then
-                    local secret = proto.loadSecret()
-                    if secret then
-                        local sig = msg.sig
-                        msg.sig = nil
-                        local expected = proto.hmac(secret, "")  -- simplified
-                        msg.sig = sig
-                        -- Handle the message type
-                        local handler = handlers[msg.type]
-                        if handler then
-                            local response = handler(senderId, msg.payload or {})
-                            if response then
-                                proto.send(senderId, msg.type .. "_response", response)
-                            end
+                -- Verify signature inline (event already consumed)
+                local valid, verr = proto.verifyMessage(msg)
+                if valid and msg.type then
+                    local handler = handlers[msg.type]
+                    if handler then
+                        local response = handler(senderId, msg.payload or {})
+                        if response then
+                            proto.send(senderId, msg.type .. "_response", response)
                         end
+                    else
+                        db.logFrom("MAINFRAME", "UNKNOWN_MSG", msg.type .. " from #" .. senderId)
                     end
                 end
 

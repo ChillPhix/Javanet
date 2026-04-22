@@ -233,11 +233,11 @@ local function main()
     applyFaction()
     ui.loadCachedIdentity()
 
-    -- Monitor setup — detect and redirect BEFORE boot animation
+    -- Monitor setup — detect and MIRROR to both computer + monitor
     monitor.detectMonitors()
     local usingMonitor = false
     if monitor.hasPrimary() then
-        monitor.setPrimary()  -- redirect all term output to monitor
+        monitor.enableMirror()  -- both computer screen AND monitor show the same thing
         usingMonitor = true
     end
 

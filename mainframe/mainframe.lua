@@ -589,8 +589,11 @@ local function main()
         module_names = {"Protocol", "Database", "Security", "Network", "Modules"},
     })
 
-    -- Monitor setup
+    -- Monitor setup — mirror to both computer + monitor
     monitor.detectMonitors()
+    if monitor.hasPrimary() then
+        monitor.enableMirror()
+    end
 
     -- Main event loop
     db.logFrom("MAINFRAME", "ONLINE", "ID #" .. os.getComputerID())

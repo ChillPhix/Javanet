@@ -91,7 +91,13 @@ end
 
 function M.createMultiTerm(targets)
     local multi = {}
-    local w, h = targets[1].getSize()
+    -- Use the smallest width and height so content fits on ALL targets
+    local minW, minH = math.huge, math.huge
+    for _, t in ipairs(targets) do
+        local tw, th = t.getSize()
+        if tw < minW then minW = tw end
+        if th < minH then minH = th end
+    end
 
     local function callAll(method, ...)
         local result
@@ -105,19 +111,23 @@ function M.createMultiTerm(targets)
 
     multi.write = function(s) return callAll("write", s) end
     multi.clear = function() return callAll("clear") end
+    multi.clearLine = function() return callAll("clearLine") end
     multi.setCursorPos = function(x, y) return callAll("setCursorPos", x, y) end
     multi.getCursorPos = function() return targets[1].getCursorPos() end
     multi.setTextColor = function(c) return callAll("setTextColor", c) end
+    multi.setTextColour = function(c) return callAll("setTextColor", c) end
     multi.setBackgroundColor = function(c) return callAll("setBackgroundColor", c) end
+    multi.setBackgroundColour = function(c) return callAll("setBackgroundColor", c) end
     multi.getTextColor = function() return targets[1].getTextColor() end
+    multi.getTextColour = multi.getTextColor
     multi.getBackgroundColor = function() return targets[1].getBackgroundColor() end
-    multi.getSize = function() return w, h end
-    multi.isColor = function() return targets[1].isColor() end
+    multi.getBackgroundColour = multi.getBackgroundColor
+    multi.getSize = function() return minW, minH end
+    multi.isColor = function() return true end
     multi.isColour = multi.isColor
     multi.scroll = function(n) return callAll("scroll", n) end
     multi.setCursorBlink = function(b) return callAll("setCursorBlink", b) end
     multi.getCursorBlink = function() return targets[1].getCursorBlink() end
-    multi.setTextScale = function(s) return callAll("setTextScale", s) end
 
     if targets[1].blit then
         multi.blit = function(t, f, b) return callAll("blit", t, f, b) end

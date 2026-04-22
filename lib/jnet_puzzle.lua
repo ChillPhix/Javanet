@@ -3,7 +3,7 @@
 -- Generates, renders, validates puzzles for tiers 1-5.
 -- Place at /lib/jnet_puzzle.lua on every Javanet computer.
 
-local ui = require("lib.jnet_ui")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 local M = {}
 
 -- ============================================================

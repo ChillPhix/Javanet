@@ -1,9 +1,9 @@
 -- card_reader.lua — Network Module
 -- Reads floppy disk ID cards and sends auth to mainframe.
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("card_reader", {
     name = "Card Reader",

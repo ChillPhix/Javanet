@@ -1,8 +1,8 @@
 -- deep_scan.lua — Defense Module
 -- Detect stealth protocol (raw modem) traffic.
 
-local modules = require("lib.jnet_modules")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("deep_scan", {
     name = "Deep Scanner",

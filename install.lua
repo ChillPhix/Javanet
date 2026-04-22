@@ -6,7 +6,7 @@
 local args = {...}
 local mode = args[1] or "terminal"
 
-local REPO = "https://raw.githubusercontent.com/YOUR_REPO/javanet/main/"
+local REPO = "https://raw.githubusercontent.com/ChillPhix/Javanet/main/"
 
 -- ============================================================
 -- File Lists
@@ -141,7 +141,12 @@ end
 print("Installing " .. #filesToInstall .. " files...")
 local installed = 0
 for _, file in ipairs(filesToInstall) do
-    local dest = "/" .. file
+    local dest = "/jnet/" .. file
+    -- Create parent directory if needed
+    local dir = fs.getDir(dest)
+    if not fs.exists(dir) then
+        fs.makeDir(dir)
+    end
     -- In local mode, files are already present
     if fs.exists(dest) then
         installed = installed + 1
@@ -187,13 +192,13 @@ end
 print("")
 if mode == "mainframe" then
     local f = fs.open("/startup.lua", "w")
-    f.write('shell.run("/mainframe/mainframe.lua")')
+    f.write('shell.run("/jnet/mainframe/mainframe.lua")')
     f.close()
     print("Startup set to: mainframe")
     print("Reboot to start the mainframe.")
 elseif mode == "customizer" then
     local f = fs.open("/startup.lua", "w")
-    f.write('shell.run("/customizer/customizer.lua")')
+    f.write('shell.run("/jnet/customizer/customizer.lua")')
     f.close()
     print("Startup set to: customizer")
     print("Reboot to configure this terminal.")

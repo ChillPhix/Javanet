@@ -1,9 +1,9 @@
 -- full_log.lua — Network Module
 -- Scrollable full audit log with filtering and search.
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("full_log", {
     name = "Full Log Viewer",

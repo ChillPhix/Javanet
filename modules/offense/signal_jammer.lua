@@ -1,8 +1,8 @@
 -- signal_jammer.lua — Offense Module
 -- Flood raw modem traffic to cause timeouts.
 
-local modules = require("lib.jnet_modules")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("signal_jammer", {
     name = "Signal Jammer",

@@ -2,9 +2,9 @@
 -- Visual takeover screen showing attacker faction branding.
 -- Deployed via payload_deployer after successful crack.
 
-local ui = require("lib.jnet_ui")
-local anim = require("lib.jnet_anim")
-local config = require("lib.jnet_config")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
+local anim = dofile("/jnet/lib/jnet_anim.lua")
+local config = dofile("/jnet/lib/jnet_config.lua")
 
 local args = {...}
 local attackerName = args[1] or "UNKNOWN"

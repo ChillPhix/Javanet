@@ -3,11 +3,11 @@
 -- Visual terminal builder with live preview on attached monitor.
 -- Run on any Javanet computer to configure which modules it runs.
 
-local ui = require("lib.jnet_ui")
-local config = require("lib.jnet_config")
-local anim = require("lib.jnet_anim")
-local monitor = require("lib.jnet_monitor")
-local modules_lib = require("lib.jnet_modules")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
+local config = dofile("/jnet/lib/jnet_config.lua")
+local anim = dofile("/jnet/lib/jnet_anim.lua")
+local monitor = dofile("/jnet/lib/jnet_monitor.lua")
+local modules_lib = dofile("/jnet/lib/jnet_modules.lua")
 
 -- ============================================================
 -- State
@@ -209,7 +209,7 @@ local function screenSave()
 
     -- Set startup
     local f = fs.open("/startup.lua", "w")
-    f.write('shell.run("/runtime/terminal.lua")')
+    f.write('shell.run("/jnet/runtime/terminal.lua")')
     f.close()
 
     ui.clear()

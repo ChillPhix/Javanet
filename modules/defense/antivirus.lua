@@ -1,8 +1,8 @@
 -- antivirus.lua — Defense Module
 -- Scan local + network for agents, worms, backdoors. Quarantine/purge.
 
-local modules = require("lib.jnet_modules")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("antivirus", {
     name = "Antivirus",

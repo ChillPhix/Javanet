@@ -1,9 +1,9 @@
 -- sentinel.lua — Defense Module
 -- Dashboard: network health, threat level, infection status.
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("sentinel", {
     name = "Network Sentinel",

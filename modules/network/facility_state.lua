@@ -1,9 +1,9 @@
 -- facility_state.lua — Network Module
 -- Change overall facility state (normal/alert/emergency/lockdown).
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 local STATES = {"normal", "alert", "emergency", "lockdown"}
 

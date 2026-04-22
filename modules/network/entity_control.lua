@@ -1,9 +1,9 @@
 -- entity_control.lua — Network Module
 -- Set entity status (contained/breached/testing/neutralized/etc.)
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 local STATUSES = {"contained", "breached", "testing", "transferred", "neutralized", "unknown"}
 

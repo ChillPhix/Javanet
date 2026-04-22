@@ -4,7 +4,7 @@
 -- screen transitions, glitch effects, and visual flair.
 -- Place at /lib/jnet_anim.lua on every Javanet computer.
 
-local ui = require("lib.jnet_ui")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 local M = {}
 
 -- ============================================================

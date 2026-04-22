@@ -1,8 +1,8 @@
 -- door_lock.lua — Network Module
 -- Controls redstone output to open/close doors.
 
-local modules = require("lib.jnet_modules")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("door_lock", {
     name = "Door Lock",

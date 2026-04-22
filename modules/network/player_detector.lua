@@ -1,9 +1,9 @@
 -- player_detector.lua — Network Module
 -- Reports nearby players to mainframe for zone tracking.
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("player_detector", {
     name = "Player Detector",

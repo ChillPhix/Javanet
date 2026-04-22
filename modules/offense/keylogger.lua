@@ -1,8 +1,8 @@
 -- keylogger.lua — Offense Module
 -- Deploy fake door terminal that captures card swipes.
 
-local modules = require("lib.jnet_modules")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("keylogger", {
     name = "Keylogger",

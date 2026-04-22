@@ -3,7 +3,7 @@
 -- Handles config file read/write and first-run setup wizards.
 -- Place at /lib/jnet_config.lua on every Javanet computer.
 
-local ui = require("lib.jnet_ui")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 local M = {}
 
 M.CONFIG_PATH = "/.jnet_config"

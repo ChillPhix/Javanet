@@ -4,13 +4,13 @@
 -- attack protocol responses, and facility management.
 -- Fixed piece — not modular, but dashboard is customizable.
 
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
-local config = require("lib.jnet_config")
-local anim = require("lib.jnet_anim")
-local monitor = require("lib.jnet_monitor")
-local db = require("mainframe.db")
-local puzzle = require("lib.jnet_puzzle")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
+local config = dofile("/jnet/lib/jnet_config.lua")
+local anim = dofile("/jnet/lib/jnet_anim.lua")
+local monitor = dofile("/jnet/lib/jnet_monitor.lua")
+local db = dofile("/jnet/mainframe/db.lua")
+local puzzle = dofile("/jnet/lib/jnet_puzzle.lua")
 
 -- ============================================================
 -- First-Boot Wizard
@@ -601,7 +601,7 @@ local function main()
             local cmd = read()
             if cmd == "admin" then
                 -- Run admin CLI
-                shell.run("/mainframe/admin_cli.lua")
+                shell.run("/jnet/mainframe/admin_cli.lua")
             end
             renderDashboard()
 

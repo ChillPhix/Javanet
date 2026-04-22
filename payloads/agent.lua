@@ -45,8 +45,8 @@ os.pullEventRaw = function(filter)
                 return os.pullEventRaw(filter)
             elseif msg.type == "agent_activate" then
                 -- Run lockout
-                if fs.exists("/payloads/lockout.lua") then
-                    shell.run("/payloads/lockout.lua", msg.name or "", msg.motto or "")
+                if fs.exists("/jnet/payloads/lockout.lua") then
+                    shell.run("/jnet/payloads/lockout.lua", msg.name or "", msg.motto or "")
                 end
                 return os.pullEventRaw(filter)
             end

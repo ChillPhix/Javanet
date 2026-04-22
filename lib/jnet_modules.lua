@@ -96,7 +96,7 @@ function M.renderModule(instance, panel)
     local ok, err = pcall(instance.def.render, instance, panel)
     if not ok then
         -- Draw error state
-        local ui = require("lib.jnet_ui")
+        local ui = dofile("/jnet/lib/jnet_ui.lua")
         ui.write(panel.x + 1, panel.y + 1, "ERR: " .. instance.id, colors.red, colors.black)
     end
     instance.dirty = false
@@ -154,13 +154,13 @@ end
 function M.discoverModules()
     local dirs = {"modules/network", "modules/offense", "modules/defense"}
     for _, dir in ipairs(dirs) do
-        local path = "/" .. dir
+        local path = "/jnet/" .. dir
         if fs.exists(path) and fs.isDir(path) then
             for _, file in ipairs(fs.list(path)) do
                 if file:match("%.lua$") then
-                    local modPath = dir .. "/" .. file:gsub("%.lua$", "")
+                    local modPath = "/jnet/" .. dir .. "/" .. file
                     local ok, err = pcall(function()
-                        require(modPath)
+                        dofile(modPath)
                     end)
                 end
             end

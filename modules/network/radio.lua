@@ -1,8 +1,8 @@
 -- radio.lua — Network Module
 -- Broadcast/listen on open radio channels.
 
-local modules = require("lib.jnet_modules")
-local ui = require("lib.jnet_ui")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
 
 modules.register("radio", {
     name = "Radio",

@@ -1,10 +1,10 @@
 -- tracer.lua — Defense Module
 -- Solve counter-puzzle to reveal attacker computer ID.
 
-local modules = require("lib.jnet_modules")
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
-local puzzle = require("lib.jnet_puzzle")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
+local puzzle = dofile("/jnet/lib/jnet_puzzle.lua")
 
 modules.register("tracer", {
     name = "Tracer",

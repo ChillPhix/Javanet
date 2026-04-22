@@ -3,12 +3,12 @@
 -- Reads module config, loads modules, manages layout, routes events.
 -- Every non-mainframe terminal runs this as startup.lua.
 
-local proto = require("lib.jnet_proto")
-local ui = require("lib.jnet_ui")
-local config = require("lib.jnet_config")
-local anim = require("lib.jnet_anim")
-local monitor = require("lib.jnet_monitor")
-local modules = require("lib.jnet_modules")
+local proto = dofile("/jnet/lib/jnet_proto.lua")
+local ui = dofile("/jnet/lib/jnet_ui.lua")
+local config = dofile("/jnet/lib/jnet_config.lua")
+local anim = dofile("/jnet/lib/jnet_anim.lua")
+local monitor = dofile("/jnet/lib/jnet_monitor.lua")
+local modules = dofile("/jnet/lib/jnet_modules.lua")
 
 -- ============================================================
 -- State

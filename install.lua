@@ -203,8 +203,12 @@ elseif mode == "customizer" then
     print("Startup set to: customizer")
     print("Reboot to configure this terminal.")
 else
-    print("Run '/jnet/customizer/customizer.lua' to set up this terminal.")
-    print("Or set startup.lua manually.")
+    -- Default terminal install: auto-launch customizer on first boot
+    local f = fs.open("/startup.lua", "w")
+    f.write('shell.run("/jnet/customizer/customizer.lua")')
+    f.close()
+    print("Startup set to: customizer")
+    print("Reboot to configure this terminal.")
 end
 
 print("")

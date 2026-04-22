@@ -257,6 +257,19 @@ handlers.archive_get_docs = function(senderId, payload)
     return { documents = db.getArchiveDocuments(payload.folder) }
 end
 
+handlers.faction_query = function(senderId, payload)
+    local identity = db.getIdentity()
+    return {
+        name = identity.name,
+        subtitle = identity.subtitle,
+        motto = identity.motto,
+        fgColor = identity.fgColor,
+        bgColor = identity.bgColor,
+        bootPreset = identity.bootPreset,
+        logoPath = identity.logoPath,
+    }
+end
+
 -- ============================================================
 -- Attack Protocol Handlers
 -- ============================================================

@@ -1,4 +1,7 @@
 -- db.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["db"] then return _JNET_LOADED["db"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Javanet mainframe database module.
 -- Persists all facility data to /jnet_db.
 -- Custom clearance hierarchies, faction identity, full CRUD.
@@ -707,4 +710,5 @@ function M.getStatus()
     }
 end
 
+_JNET_LOADED["db"] = M
 return M

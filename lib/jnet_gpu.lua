@@ -1,4 +1,7 @@
 -- jnet_gpu.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_gpu"] then return _JNET_LOADED["jnet_gpu"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- DirectGPU wrapper for Javanet terminals.
 -- Provides GPU-accelerated rendering when available,
 -- with automatic fallback to monitor/term.
@@ -166,4 +169,5 @@ function M.available()
     return M.hasGPU and M.canvas ~= nil
 end
 
+_JNET_LOADED["jnet_gpu"] = M
 return M

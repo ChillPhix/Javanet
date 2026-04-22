@@ -1,4 +1,7 @@
 -- jnet_puzzle.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_puzzle"] then return _JNET_LOADED["jnet_puzzle"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Puzzle engine for Javanet hacking/defense gameplay.
 -- Generates, renders, validates puzzles for tiers 1-5.
 -- Place at /lib/jnet_puzzle.lua on every Javanet computer.
@@ -764,4 +767,5 @@ M.register("system_siege", {
     end,
 })
 
+_JNET_LOADED["jnet_puzzle"] = M
 return M

@@ -1,4 +1,7 @@
 -- jnet_config.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_config"] then return _JNET_LOADED["jnet_config"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Configuration management for Javanet terminals.
 -- Handles config file read/write and first-run setup wizards.
 -- Place at /lib/jnet_config.lua on every Javanet computer.
@@ -213,4 +216,5 @@ function M.loadOrWizard(title, fields, path)
     return result, true
 end
 
+_JNET_LOADED["jnet_config"] = M
 return M

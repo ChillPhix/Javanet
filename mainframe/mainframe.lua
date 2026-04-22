@@ -303,7 +303,7 @@ atkHandlers.crack_request = function(senderId, payload)
             timeLimit = p.timeLimit,
             maxAttempts = p.maxAttempts,
             -- Type-specific data (without answers)
-            puzzleParams = M.serializePuzzleParams(p),
+            puzzleParams = serializePuzzleParams(p),
         },
     }
 end
@@ -470,7 +470,7 @@ end
 -- Puzzle Param Serialization (strip answers)
 -- ============================================================
 
-function M.serializePuzzleParams(p)
+local function serializePuzzleParams(p)
     -- Return only what the client needs to render, not solutions
     return {
         typeName = p.typeName,

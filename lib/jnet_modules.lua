@@ -1,4 +1,7 @@
 -- jnet_modules.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_modules"] then return _JNET_LOADED["jnet_modules"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Module registry and runtime loader for Javanet.
 -- Manages module definitions, loading, lifecycle, and event routing.
 -- Place at /lib/jnet_modules.lua on every Javanet computer.
@@ -207,4 +210,5 @@ function M.getDominantDomain(instances)
     return domain
 end
 
+_JNET_LOADED["jnet_modules"] = M
 return M

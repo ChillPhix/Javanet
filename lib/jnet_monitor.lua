@@ -1,4 +1,7 @@
 -- jnet_monitor.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_monitor"] then return _JNET_LOADED["jnet_monitor"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Multi-monitor manager for Javanet terminals.
 -- Handles detection, adaptive layouts, mirroring, and touch routing.
 -- Place at /lib/jnet_monitor.lua on every Javanet computer.
@@ -273,4 +276,5 @@ function M.getTerminalClass()
     else return "tiny" end
 end
 
+_JNET_LOADED["jnet_monitor"] = M
 return M

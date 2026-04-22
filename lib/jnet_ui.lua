@@ -1,4 +1,7 @@
 -- jnet_ui.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_ui"] then return _JNET_LOADED["jnet_ui"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Themed UI library for Javanet terminals.
 -- Supports full faction theming, role-based border styles,
 -- adaptive layouts, and monitor-aware rendering.
@@ -630,4 +633,5 @@ function M.formatTime(seconds)
     return string.format("%d:%02d", m, s)
 end
 
+_JNET_LOADED["jnet_ui"] = M
 return M

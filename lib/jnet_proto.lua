@@ -1,4 +1,7 @@
 -- jnet_proto.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_proto"] then return _JNET_LOADED["jnet_proto"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- HMAC-SHA256 signed rednet protocol for Javanet
 -- Provides authenticated, replay-protected messaging between faction computers.
 -- Place at /lib/jnet_proto.lua on every Javanet computer.
@@ -311,4 +314,5 @@ function M.stealthClose(modem, channel)
     if modem.isOpen(channel) then modem.close(channel) end
 end
 
+_JNET_LOADED["jnet_proto"] = M
 return M

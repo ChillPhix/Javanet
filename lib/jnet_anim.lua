@@ -1,4 +1,7 @@
 -- jnet_anim.lua
+-- Module cache: return existing instance if already loaded
+if _JNET_LOADED and _JNET_LOADED["jnet_anim"] then return _JNET_LOADED["jnet_anim"] end
+if not _JNET_LOADED then _JNET_LOADED = {} end
 -- Animation library for Javanet terminals.
 -- Provides reusable animation primitives for boot sequences,
 -- screen transitions, glitch effects, and visual flair.
@@ -554,4 +557,5 @@ function M.lockoutReveal(factionName, motto, logoLines, fg, bg)
     end
 end
 
+_JNET_LOADED["jnet_anim"] = M
 return M

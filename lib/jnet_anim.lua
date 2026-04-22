@@ -403,6 +403,23 @@ local SPEED_MULTIPLIER = {
 
 function M.bootSequence(config, skipCheck)
     config = config or {}
+
+    -- Check for custom boot script first
+    -- Players can create /.jnet_boot.lua with their own animation
+    -- The script receives: ui, anim (this module), W, H, config
+    if fs.exists("/.jnet_boot.lua") then
+        local W, H = ui.getSize()
+        ui.clear()
+        local ok, err = pcall(function()
+            local bootFn = dofile("/.jnet_boot.lua")
+            if type(bootFn) == "function" then
+                bootFn(ui, M, W, H, config)
+            end
+        end)
+        if ok then return end
+        -- Custom boot failed, fall through to preset
+    end
+
     local preset = M.BOOT_PRESETS[config.preset or "military"] or M.BOOT_PRESETS.military
     local transition = config.transition or preset.transition
     local loadingStyle = config.loading_style or preset.loading_style

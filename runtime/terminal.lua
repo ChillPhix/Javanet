@@ -233,20 +233,45 @@ local function main()
     applyFaction()
     ui.loadCachedIdentity()
 
-    -- Boot animation
+    -- Monitor setup — detect and redirect BEFORE boot animation
+    monitor.detectMonitors()
+    local usingMonitor = false
+    if monitor.hasPrimary() then
+        monitor.setPrimary()  -- redirect all term output to monitor
+        usingMonitor = true
+    end
+
+    -- Boot animation (now renders on monitor if present)
     local bootConfig = termConfig.bootConfig or {}
     bootConfig.preset = bootConfig.preset or (factionConfig and factionConfig.bootPreset) or "military"
-    bootConfig.module_names = modules.getModuleNames(modules.loaded)
-    anim.bootSequence(bootConfig)
 
-    -- Load modules
+    -- Load modules first so we can show their names in boot
     if not loadAllModules() then return end
 
-    -- Monitor setup
-    monitor.detectMonitors()
-    if termConfig.mirrorMonitor then
-        monitor.enableMirror()
+    bootConfig.module_names = modules.getModuleNames(modules.loaded)
+
+    -- Check screen size — skip fancy boot on tiny screens
+    local W, H = term.getSize()
+    if W < 15 or H < 8 then
+        -- Too small for full boot animation, just do a quick flash
+        term.setBackgroundColor(colors.black)
+        term.clear()
+        term.setCursorPos(1, 1)
+        term.setTextColor(colors.yellow)
+        term.write("JAVANET")
+        sleep(0.5)
+    else
+        anim.bootSequence(bootConfig)
     end
+
+    -- Force tabs mode on small screens
+    local layoutMode = termConfig.layoutMode or "auto"
+    if layoutMode == "auto" then
+        if W < 30 or H < 12 then
+            layoutMode = "tabs"  -- small monitor: one module at a time
+        end
+    end
+    termConfig.layoutMode = layoutMode
 
     -- Calculate layout
     calculateLayout()

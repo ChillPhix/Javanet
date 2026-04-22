@@ -22,10 +22,11 @@ modules.register("cracker", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         if self.state.phase == "target" then
             ui.write(panel.x, panel.y, "PUZZLE CRACKER", ui.FG, ui.BG)
             ui.write(panel.x, panel.y + 2, "Target ID: " .. self.state.inputBuffer .. "_", ui.ACCENT, ui.BG)
-            ui.write(panel.x, panel.y + 4, "[ENTER] Initiate crack", ui.DIM, ui.BG)
+            ui.write(panel.x, panel.y + 4, "[Tap/Enter] Initiate crack", ui.DIM, ui.BG)
         elseif self.state.phase == "result" then
             if self.state.sessionToken then
                 ui.write(panel.x, panel.y, "ACCESS GRANTED", ui.OK, ui.BG)
@@ -38,7 +39,16 @@ modules.register("cracker", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if self.state.phase == "target" then
                 if ev[2] == keys.enter and #self.state.inputBuffer > 0 then
                     local tid = tonumber(self.state.inputBuffer)

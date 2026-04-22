@@ -20,6 +20,7 @@ modules.register("facility_state", {
     init = function(self) self.state.currentState = "normal" self.state.selected = 1 end,
 
     render = function(self, panel)
+        self._panel = panel
         local stateColors = { normal=ui.OK, alert=ui.WARN, emergency=ui.ERR, lockdown=ui.ERR }
         ui.write(panel.x, panel.y, "Current: " .. self.state.currentState:upper(), stateColors[self.state.currentState] or ui.FG, ui.BG)
         for i, s in ipairs(STATES) do
@@ -32,12 +33,35 @@ modules.register("facility_state", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y - 1
+                if relY >= 1 and relY <= #STATES then
+                    self.state.selected = relY
+                    local mfId = self.config.mainframeId
+                    if mfId then proto.send(tonumber(mfId), "facility_command", { action = "set_state", state = STATES[relY] }) end
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
             elseif ev[2] == keys.down then self.state.selected = math.min(#STATES, self.state.selected + 1); self.dirty = true
             elseif ev[2] == keys.enter then
                 local mfId = self.config.mainframeId
                 if mfId then proto.send(tonumber(mfId), "facility_command", { action = "set_state", state = STATES[self.state.selected] }) end
+            end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
             end
         end
     end,

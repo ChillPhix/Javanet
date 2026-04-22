@@ -17,6 +17,7 @@ modules.register("signal_jammer", {
     init = function(self) self.state.active = false self.state.sent = 0 end,
 
     render = function(self, panel)
+        self._panel = panel
         local cy = panel.y + math.floor(panel.h / 2)
         if self.state.active then
             ui.write(panel.x, cy, ui.pad("!! JAMMING !!", panel.w, " ", "center"), ui.ERR, ui.BG)
@@ -27,7 +28,12 @@ modules.register("signal_jammer", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" and ev[2] == keys.space then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            -- Tap to toggle
+            self.state.active = not self.state.active
+            self.state.sent = 0
+            self.dirty = true
+        elseif ev[1] == "key" and ev[2] == keys.space then
             self.state.active = not self.state.active
             self.state.sent = 0
             self.dirty = true

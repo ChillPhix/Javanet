@@ -19,6 +19,7 @@ modules.register("honeypot", {
     init = function(self) self.state.trapped = {} self.state.trapCount = 0 end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "HONEYPOT MODE", ui.WARN, ui.BG)
         ui.write(panel.x, panel.y + 1, "Disguised as: " .. (self.config.fakeName or "?"), ui.DIM, ui.BG)
         ui.write(panel.x, panel.y + 2, "Trapped: " .. self.state.trapCount, self.state.trapCount > 0 and ui.OK or ui.DIM, ui.BG)

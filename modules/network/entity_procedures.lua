@@ -20,6 +20,7 @@ modules.register("entity_procedures", {
     init = function(self) self.state.unlocked = false self.state.procedures = "" end,
 
     render = function(self, panel)
+        self._panel = panel
         if not self.state.unlocked then
             ui.write(panel.x, panel.y + math.floor(panel.h/2), "CLASSIFIED", ui.ERR, ui.BG)
             ui.write(panel.x, panel.y + math.floor(panel.h/2) + 1, "Insert ID card", ui.DIM, ui.BG)

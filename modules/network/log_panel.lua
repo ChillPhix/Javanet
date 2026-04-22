@@ -19,6 +19,7 @@ modules.register("log_panel", {
     init = function(self) self.state.logLines = {} end,
 
     render = function(self, panel)
+        self._panel = panel
         local lines = self.state.logLines or {}
         if #lines == 0 then
             ui.write(panel.x, panel.y, "No log entries", ui.DIM, ui.BG)

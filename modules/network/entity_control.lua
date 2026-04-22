@@ -20,6 +20,7 @@ modules.register("entity_control", {
     init = function(self) self.state.entities = {} self.state.selected = 1 end,
 
     render = function(self, panel)
+        self._panel = panel
         local items = {}
         for id, e in pairs(self.state.entities or {}) do items[#items+1] = { id = id, status = e.status or "?" } end
         table.sort(items, function(a, b) return a.id < b.id end)
@@ -31,11 +32,20 @@ modules.register("entity_control", {
             local sCol = item.status == "contained" and ui.OK or (item.status == "breached" and ui.ERR or ui.WARN)
             ui.write(panel.x, row, prefix .. ui.truncate(item.id .. " [" .. item.status .. "]", panel.w), sCol, ui.BG)
         end
-        ui.write(panel.x, panel.y + panel.h - 1, "[ENTER] Cycle status", ui.DIM, ui.BG)
+        ui.write(panel.x, panel.y + panel.h - 1, "[Tap/Enter] Cycle status", ui.DIM, ui.BG)
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
             elseif ev[2] == keys.down then self.state.selected = self.state.selected + 1; self.dirty = true
             elseif ev[2] == keys.enter then
@@ -49,6 +59,18 @@ modules.register("entity_control", {
                     local newIdx = (curIdx % #STATUSES) + 1
                     local mfId = self.config.mainframeId
                     if mfId then proto.send(tonumber(mfId), "facility_command", { action = "set_entity_status", entityId = item.id, status = STATUSES[newIdx] }) end
+                end
+            end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
+                    self.dirty = true
                 end
             end
         end

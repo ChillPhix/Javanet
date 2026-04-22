@@ -20,6 +20,7 @@ modules.register("player_detector", {
     init = function(self) self.state.players = {} end,
 
     render = function(self, panel)
+        self._panel = panel
         local players = self.state.players or {}
         ui.write(panel.x, panel.y, "Zone: " .. (self.config.zone or "?"), ui.DIM, ui.BG)
         ui.write(panel.x, panel.y + 1, "Detected: " .. #players, ui.FG, ui.BG)

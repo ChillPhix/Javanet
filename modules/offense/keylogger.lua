@@ -21,6 +21,7 @@ modules.register("keylogger", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         if self.state.showCaptures then
             ui.write(panel.x, panel.y, "CAPTURED: " .. #self.state.captures, ui.FG, ui.BG)
             for i, c in ipairs(self.state.captures) do
@@ -45,6 +46,9 @@ modules.register("keylogger", {
                 self.state.captures[#self.state.captures+1] = { diskId = diskId, time = os.epoch("utc") }
                 self.dirty = true
             end
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            self.state.fakeMode = not self.state.fakeMode
+            self.dirty = true
         elseif ev[1] == "key" and ev[2] == keys.f1 then
             self.state.showCaptures = not self.state.showCaptures
             self.dirty = true

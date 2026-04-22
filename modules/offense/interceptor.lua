@@ -21,6 +21,7 @@ modules.register("interceptor", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local st = self.state.active and "[LISTENING]" or "[STOPPED]"
         ui.write(panel.x, panel.y, "INTERCEPTOR " .. st, self.state.active and ui.OK or ui.DIM, ui.BG)
         ui.write(panel.x, panel.y + 1, "Captured: " .. self.state.captureCount, ui.DIM, ui.BG)
@@ -34,7 +35,7 @@ modules.register("interceptor", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" and ev[2] == keys.space then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" or (ev[1] == "key" and ev[2] == keys.space) then
             self.state.active = not self.state.active
             if self.state.active then
                 local modem = peripheral.find("modem")

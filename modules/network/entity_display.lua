@@ -19,6 +19,7 @@ modules.register("entity_display", {
     init = function(self) self.state.entity = nil self.state.breached = false end,
 
     render = function(self, panel)
+        self._panel = panel
         local e = self.state.entity
         if not e then ui.write(panel.x, panel.y, "No data", ui.DIM, ui.BG); return end
         local y = panel.y

@@ -15,6 +15,7 @@ modules.register("clock", {
     init = function(self) end,
 
     render = function(self, panel)
+        self._panel = panel
         local time = textutils.formatTime(os.time(), true)
         local day = os.day()
         ui.write(panel.x + math.floor((panel.w - #time) / 2), panel.y + math.floor(panel.h / 2), time, ui.ACCENT, ui.BG)

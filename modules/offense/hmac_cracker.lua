@@ -22,6 +22,7 @@ modules.register("hmac_cracker", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "HMAC CRACKER", ui.FG, ui.BG)
         if self.state.found then
             ui.write(panel.x, panel.y + 2, "SECRET FOUND: " .. self.state.found, ui.OK, ui.BG)
@@ -36,7 +37,7 @@ modules.register("hmac_cracker", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" and ev[2] == keys.enter and self.state.capturedMsg and not self.state.running then
+        if (ev[1] == "mouse_click" or ev[1] == "monitor_touch" or (ev[1] == "key" and ev[2] == keys.enter)) and self.state.capturedMsg and not self.state.running then
             self.state.running = true
             self.state.attempts = 0
             -- Try dictionary

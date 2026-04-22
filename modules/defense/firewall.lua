@@ -23,6 +23,7 @@ modules.register("firewall", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "FIREWALL", ui.FG, ui.BG)
         ui.write(panel.x, panel.y + 1, "Blocked: " .. self.state.totalBlocked, self.state.totalBlocked > 0 and ui.ERR or ui.OK, ui.BG)
         local row = panel.y + 2

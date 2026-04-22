@@ -18,6 +18,7 @@ modules.register("quarantine", {
     init = function(self) self.state.quarantined = {} self.state.selected = 1 self.state.inputBuffer = "" end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "QUARANTINE ZONE", ui.FG, ui.BG)
         local q = self.state.quarantined or {}
         if #q == 0 then ui.write(panel.x, panel.y + 1, "No quarantined nodes", ui.OK, ui.BG)
@@ -30,11 +31,20 @@ modules.register("quarantine", {
             end
         end
         ui.write(panel.x, panel.y + panel.h - 2, "Add: " .. self.state.inputBuffer .. "_", ui.DIM, ui.BG)
-        ui.write(panel.x, panel.y + panel.h - 1, "[ENTER]Add [D]elease", ui.DIM, ui.BG)
+        ui.write(panel.x, panel.y + panel.h - 1, "[Tap/Enter]Add [D]elease", ui.DIM, ui.BG)
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.enter and #self.state.inputBuffer > 0 then
                 local id = tonumber(self.state.inputBuffer)
                 if id then self.state.quarantined[#self.state.quarantined+1] = id end

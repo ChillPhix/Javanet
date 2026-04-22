@@ -19,6 +19,7 @@ modules.register("approval_queue", {
     init = function(self) self.state.pending = {} self.state.selected = 1 end,
 
     render = function(self, panel)
+        self._panel = panel
         local pending = self.state.pending or {}
         local items = {}
         for id, info in pairs(pending) do items[#items+1] = { id = id, info = info } end
@@ -34,7 +35,16 @@ modules.register("approval_queue", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             local items = {}
             for id, info in pairs(self.state.pending or {}) do items[#items+1] = { id = id, info = info } end
             if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true

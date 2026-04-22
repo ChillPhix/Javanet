@@ -19,6 +19,7 @@ modules.register("siren", {
     init = function(self) self.state.active = false self.state.pattern = "alert" end,
 
     render = function(self, panel)
+        self._panel = panel
         local cy = panel.y + math.floor(panel.h / 2)
         if self.state.active then
             ui.write(panel.x, cy, ui.pad("!! SIREN ACTIVE !!", panel.w, " ", "center"), ui.ERR, ui.BG)

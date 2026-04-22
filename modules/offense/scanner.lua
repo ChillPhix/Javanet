@@ -16,6 +16,7 @@ modules.register("scanner", {
     init = function(self) self.state.targets = {} self.state.selected = 1 self.state.scanning = false end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "NETWORK SCANNER", ui.FG, ui.BG)
         local status = self.state.scanning and "[SCAN]" or "[IDLE]"
         ui.write(panel.x + panel.w - 7, panel.y, status, self.state.scanning and ui.WARN or ui.DIM, ui.BG)
@@ -33,7 +34,16 @@ modules.register("scanner", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.s then
                 self.state.scanning = true
                 self.dirty = true

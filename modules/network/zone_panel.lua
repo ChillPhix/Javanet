@@ -18,6 +18,7 @@ modules.register("zone_panel", {
     init = function(self) self.state.zones = {} end,
 
     render = function(self, panel)
+        self._panel = panel
         local zones = self.state.zones or {}
         if #zones == 0 then
             ui.write(panel.x, panel.y, "No zones", ui.DIM, ui.BG)

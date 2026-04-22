@@ -21,6 +21,7 @@ modules.register("status_panel", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local s = self.state.status
         if not s then
             ui.write(panel.x, panel.y + 1, "Connecting...", ui.DIM, ui.BG)

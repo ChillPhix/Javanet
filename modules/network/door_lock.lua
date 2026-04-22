@@ -28,6 +28,7 @@ modules.register("door_lock", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local cy = panel.y + math.floor(panel.h / 2)
         if self.state.isOpen then
             ui.write(panel.x, cy, ui.pad("DOOR OPEN", panel.w, " ", "center"), ui.OK, ui.BG)

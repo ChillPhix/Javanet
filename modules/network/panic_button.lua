@@ -19,17 +19,26 @@ modules.register("panic_button", {
     init = function(self) self.state.triggered = false end,
 
     render = function(self, panel)
+        self._panel = panel
         local cy = panel.y + math.floor(panel.h / 2)
         if self.state.triggered then
             ui.write(panel.x, cy, ui.pad("!! ALERT SENT !!", panel.w, " ", "center"), ui.ERR, ui.BG)
         else
             ui.write(panel.x, cy, ui.pad("[PANIC BUTTON]", panel.w, " ", "center"), ui.WARN, ui.BG)
-            ui.write(panel.x, cy + 1, ui.pad("Press ENTER", panel.w, " ", "center"), ui.DIM, ui.BG)
+            ui.write(panel.x, cy + 1, ui.pad("[ TAP TO TRIGGER ]", panel.w, " ", "center"), ui.DIM, ui.BG)
         end
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" and ev[2] == keys.enter and not self.state.triggered then
+        if (ev[1] == "mouse_click" or ev[1] == "monitor_touch") and not self.state.triggered then
+            self.state.triggered = true
+            local mfId = self.config.mainframeId
+            if mfId then
+                proto.send(tonumber(mfId), "facility_command", { action = "set_state", state = "emergency" })
+            end
+            self.dirty = true
+            os.startTimer(5)
+        elseif ev[1] == "key" and ev[2] == keys.enter and not self.state.triggered then
             self.state.triggered = true
             local mfId = self.config.mainframeId
             if mfId then

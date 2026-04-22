@@ -29,9 +29,10 @@ modules.register("admin_panel", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         if not self.state.authenticated then
             ui.write(panel.x, panel.y + math.floor(panel.h/2), "ADMIN LOGIN REQUIRED", ui.WARN, ui.BG)
-            ui.write(panel.x, panel.y + math.floor(panel.h/2) + 1, "Press ENTER", ui.DIM, ui.BG)
+            ui.write(panel.x, panel.y + math.floor(panel.h/2) + 1, "Tap or ENTER", ui.DIM, ui.BG)
             return
         end
         if self.state.view == "menu" then
@@ -41,11 +42,32 @@ modules.register("admin_panel", {
                 local prefix = (i == self.state.selected) and "> " or "  "
                 ui.write(panel.x, row, prefix .. item, i == self.state.selected and ui.ACCENT or ui.FG, ui.BG)
             end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
         end
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if not self.state.authenticated and ev[2] == keys.enter then
                 ui.clear()
                 ui.header(ui.facilityName, "ADMIN LOGIN")
@@ -121,6 +143,18 @@ modules.register("admin_panel", {
                     end
                 elseif ev[2] == keys.backspace then
                     self.state.authenticated = false
+                    self.dirty = true
+                end
+            end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
                     self.dirty = true
                 end
             end

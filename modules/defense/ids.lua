@@ -18,6 +18,7 @@ modules.register("ids", {
     init = function(self) self.state.alerts = {} self.state.alertCount = 0 end,
 
     render = function(self, panel)
+        self._panel = panel
         local col = self.state.alertCount > 0 and ui.ERR or ui.OK
         ui.write(panel.x, panel.y, "IDS: " .. self.state.alertCount .. " alerts", col, ui.BG)
         local alerts = self.state.alerts or {}

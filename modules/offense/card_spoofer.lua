@@ -21,6 +21,7 @@ modules.register("card_spoofer", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         if self.state.mode == "menu" then
             ui.write(panel.x, panel.y, "CARD SPOOFER", ui.FG, ui.BG)
             for i, opt in ipairs(self.state.options) do
@@ -36,7 +37,16 @@ modules.register("card_spoofer", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if self.state.mode == "menu" then
                 if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
                 elseif ev[2] == keys.down then self.state.selected = math.min(#self.state.options, self.state.selected + 1); self.dirty = true
@@ -67,6 +77,18 @@ modules.register("card_spoofer", {
                 end
             elseif ev[2] == keys.backspace then
                 self.state.mode = "menu"; self.dirty = true
+            end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
             end
         end
     end,

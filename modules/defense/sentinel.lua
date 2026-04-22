@@ -24,6 +24,7 @@ modules.register("sentinel", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local threatColors = { LOW = ui.OK, MEDIUM = ui.WARN, HIGH = ui.ERR, CRITICAL = ui.ERR }
         ui.write(panel.x, panel.y, "NETWORK SENTINEL", ui.ACCENT, ui.BG)
         ui.write(panel.x, panel.y + 2, "Threat Level: " .. self.state.threatLevel, threatColors[self.state.threatLevel] or ui.FG, ui.BG)

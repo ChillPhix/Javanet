@@ -15,6 +15,7 @@ modules.register("antivirus", {
     init = function(self) self.state.threats = {} self.state.lastScan = nil end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "ANTIVIRUS", ui.FG, ui.BG)
         ui.write(panel.x, panel.y + 1, "Last scan: " .. (self.state.lastScan or "never"), ui.DIM, ui.BG)
         local threats = self.state.threats or {}
@@ -31,7 +32,16 @@ modules.register("antivirus", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.s then
                 -- Scan for known infection signatures
                 self.state.threats = {}

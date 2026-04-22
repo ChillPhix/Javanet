@@ -21,6 +21,7 @@ modules.register("card_issuer", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local cy = panel.y + 1
         local drive = peripheral.find("drive")
         local hasDisk = drive and drive.isDiskPresent()
@@ -39,7 +40,7 @@ modules.register("card_issuer", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" and ev[2] == keys.enter and self.state.phase == "idle" then
+        if (ev[1] == "mouse_click" or ev[1] == "monitor_touch" or (ev[1] == "key" and ev[2] == keys.enter)) and self.state.phase == "idle" then
             local drive = peripheral.find("drive")
             if drive and drive.isDiskPresent() then
                 ui.clear()

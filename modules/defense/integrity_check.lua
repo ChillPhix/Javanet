@@ -29,6 +29,7 @@ modules.register("integrity_check", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local col = self.state.status == "OK" and ui.OK or ui.ERR
         ui.write(panel.x, panel.y, "INTEGRITY: " .. self.state.status, col, ui.BG)
         for i, a in ipairs(self.state.alerts or {}) do

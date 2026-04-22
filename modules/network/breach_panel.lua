@@ -18,6 +18,7 @@ modules.register("breach_panel", {
     init = function(self) self.state.breaches = {} self.state.flash = false end,
 
     render = function(self, panel)
+        self._panel = panel
         local breaches = self.state.breaches or {}
         local count = 0
         for _ in pairs(breaches) do count = count + 1 end

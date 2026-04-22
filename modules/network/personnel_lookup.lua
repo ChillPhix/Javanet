@@ -18,6 +18,7 @@ modules.register("personnel_lookup", {
     init = function(self) self.state.searchBuffer = "" self.state.results = {} self.state.selected = 1 end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "Search: " .. self.state.searchBuffer .. "_", ui.ACCENT, ui.BG)
         local results = self.state.results or {}
         for i, r in ipairs(results) do
@@ -30,7 +31,16 @@ modules.register("personnel_lookup", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "char" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 3 then
+                    self.state.selected = relY - 2
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "char" then
             self.state.searchBuffer = self.state.searchBuffer .. ev[2]
             self.dirty = true
         elseif ev[1] == "key" then

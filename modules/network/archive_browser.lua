@@ -26,6 +26,7 @@ modules.register("archive_browser", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         if self.state.view == "folders" then
             ui.write(panel.x, panel.y, "NETWORK ARCHIVE", ui.ACCENT, ui.BG)
             local folders = {}
@@ -62,11 +63,32 @@ modules.register("archive_browser", {
                     ui.write(panel.x, row, ui.truncate(lines[i], panel.w), ui.FG, ui.BG)
                 end
             end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
         end
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
             elseif ev[2] == keys.down then self.state.selected = self.state.selected + 1; self.dirty = true
             elseif ev[2] == keys.enter then

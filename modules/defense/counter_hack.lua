@@ -17,6 +17,7 @@ modules.register("counter_hack", {
     init = function(self) self.state.activeThreats = {} self.state.selected = 1 end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "COUNTER-HACK", ui.FG, ui.BG)
         local threats = self.state.activeThreats or {}
         if #threats == 0 then ui.write(panel.x, panel.y + 1, "No active intrusions", ui.OK, ui.BG); return end
@@ -26,11 +27,20 @@ modules.register("counter_hack", {
             local prefix = (i == self.state.selected) and "> " or "  "
             ui.write(panel.x, row, prefix .. "#" .. t.id .. " [INTRUDING]", ui.ERR, ui.BG)
         end
-        ui.write(panel.x, panel.y + panel.h - 1, "[ENTER] Counter (match tier)", ui.DIM, ui.BG)
+        ui.write(panel.x, panel.y + panel.h - 1, "[Tap/Enter] Counter (match tier)", ui.DIM, ui.BG)
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            if self._panel then
+                local relY = cy - self._panel.y + 1
+                if relY >= 1 then
+                    self.state.selected = relY
+                    self.dirty = true
+                end
+            end
+        elseif ev[1] == "key" then
             if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
             elseif ev[2] == keys.down then self.state.selected = self.state.selected + 1; self.dirty = true
             elseif ev[2] == keys.enter then
@@ -45,6 +55,18 @@ modules.register("counter_hack", {
                             table.remove(self.state.activeThreats, self.state.selected)
                         end
                     end
+                    self.dirty = true
+                end
+            end
+
+        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            -- Click on list items to select and activate
+            if self._panel then
+                local relY = cy - self._panel.y
+                if relY >= 1 and relY <= self._panel.h then
+                    self.state.selected = relY
                     self.dirty = true
                 end
             end

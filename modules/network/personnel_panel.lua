@@ -18,6 +18,7 @@ modules.register("personnel_panel", {
     init = function(self) self.state.count = 0 end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "Personnel: " .. self.state.count, ui.FG, ui.BG)
     end,
 

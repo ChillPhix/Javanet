@@ -26,6 +26,7 @@ modules.register("card_reader", {
     end,
 
     render = function(self, panel)
+        self._panel = panel
         local cx = panel.x + math.floor(panel.w / 2)
         local cy = panel.y + 1
 

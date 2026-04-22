@@ -15,6 +15,7 @@ modules.register("deep_scan", {
     init = function(self) self.state.detections = {} self.state.active = true end,
 
     render = function(self, panel)
+        self._panel = panel
         ui.write(panel.x, panel.y, "DEEP SCAN " .. (self.state.active and "[ACTIVE]" or "[OFF]"), self.state.active and ui.OK or ui.DIM, ui.BG)
         local dets = self.state.detections or {}
         if #dets == 0 then ui.write(panel.x, panel.y + 1, "No stealth traffic", ui.DIM, ui.BG); return end
@@ -27,7 +28,10 @@ modules.register("deep_scan", {
     end,
 
     handleEvent = function(self, ev)
-        if ev[1] == "key" and ev[2] == keys.space then
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            -- Tap to toggle
+            self.state.active = not self.state.active; self.dirty = true
+        elseif ev[1] == "key" and ev[2] == keys.space then
             self.state.active = not self.state.active; self.dirty = true
         elseif ev[1] == "modem_message" and self.state.active then
             -- Raw modem traffic (not rednet) — stealth detected

@@ -203,7 +203,7 @@ elseif mode == "customizer" then
     print("Startup set to: customizer")
     print("Reboot to configure this terminal.")
 else
-    print("Run 'customizer/customizer' to set up this terminal.")
+    print("Run '/jnet/customizer/customizer.lua' to set up this terminal.")
     print("Or set startup.lua manually.")
 end
 

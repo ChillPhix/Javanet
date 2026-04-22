@@ -1,7 +1,6 @@
 -- customizer.lua
--- Javanet Terminal Customizer
--- Visual terminal builder with live preview on attached monitor.
--- Faction config is pulled from mainframe — not set per terminal.
+-- Javanet Terminal Customizer — Mouse-Driven UI
+-- Tap modules to toggle, click buttons to navigate.
 
 local ui = dofile("/jnet/lib/jnet_ui.lua")
 local config = dofile("/jnet/lib/jnet_config.lua")
@@ -14,16 +13,16 @@ local proto = dofile("/jnet/lib/jnet_proto.lua")
 -- State
 -- ============================================================
 
-local installed = {}
-local allModules = {}
+local installed = {}     -- { id=..., config={} }
+local installedSet = {}  -- { [id] = true } for quick lookup
+local allModules = {}    -- sorted list of { id, def }
+local displayList = {}   -- flat list with headers for rendering
 local factionConfig = nil
 local terminalName = ""
 local mainframeId = 0
-local layoutMode = "auto"
 local bootPreset = "military"
 local catalogScroll = 0
-local catalogSelected = 1
-local screen = "connect" -- connect, builder, save, quit
+local screen = "connect"
 local previewDirty = true
 
 -- ============================================================
@@ -40,17 +39,39 @@ local function discoverModules()
         if a.def.domain ~= b.def.domain then return a.def.domain < b.def.domain end
         return a.def.name < b.def.name
     end)
+
+    -- Build flat display list
+    displayList = {}
+    local currentDomain = ""
+    for i, mod in ipairs(allModules) do
+        if mod.def.domain ~= currentDomain then
+            currentDomain = mod.def.domain
+            displayList[#displayList+1] = {
+                type = "header",
+                text = currentDomain:upper(),
+                header = true,
+                id = "hdr_" .. currentDomain,
+            }
+        end
+        displayList[#displayList+1] = {
+            type = "module",
+            text = mod.def.name,
+            id = mod.id,
+            moduleIdx = i,
+            desc = mod.def.description or "",
+        }
+    end
 end
 
-local function isInstalled(id)
+local function rebuildInstalledSet()
+    installedSet = {}
     for _, m in ipairs(installed) do
-        if m.id == id then return true end
+        installedSet[m.id] = true
     end
-    return false
 end
 
 local function toggleModule(id)
-    if isInstalled(id) then
+    if installedSet[id] then
         for i, m in ipairs(installed) do
             if m.id == id then table.remove(installed, i); break end
         end
@@ -58,12 +79,13 @@ local function toggleModule(id)
         if #installed >= modules_lib.MAX_MODULES then return false end
         installed[#installed+1] = { id = id, config = {} }
     end
+    rebuildInstalledSet()
     previewDirty = true
     return true
 end
 
 -- ============================================================
--- Preview Rendering (on monitor if available)
+-- Preview (monitor)
 -- ============================================================
 
 local function renderPreview()
@@ -73,7 +95,6 @@ local function renderPreview()
     mon.clear()
     local mw, mh = mon.getSize()
 
-    -- Header
     mon.setCursorPos(1, 1)
     mon.setBackgroundColor(colors.yellow)
     mon.setTextColor(colors.black)
@@ -82,7 +103,6 @@ local function renderPreview()
     mon.write((pad .. title .. string.rep(" ", mw)):sub(1, mw))
     mon.setBackgroundColor(colors.black)
 
-    -- Module panels
     if #installed == 0 then
         mon.setCursorPos(2, math.floor(mh / 2))
         mon.setTextColor(colors.gray)
@@ -97,26 +117,18 @@ local function renderPreview()
             mon.setTextColor(colors.cyan)
             mon.setCursorPos(2, py)
             mon.write(("[" .. name .. "]"):sub(1, mw - 2))
-            mon.setTextColor(colors.gray)
-            for row = py + 1, math.min(py + panelH - 1, mh - 1) do
-                mon.setCursorPos(2, row)
-                mon.write(string.rep("-", mw - 2))
-            end
         end
     end
 
-    -- Footer
     mon.setCursorPos(1, mh)
     mon.setBackgroundColor(colors.yellow)
     mon.setTextColor(colors.black)
-    local footer = "Modules: " .. #installed .. "/" .. modules_lib.MAX_MODULES
-    mon.write((footer .. string.rep(" ", mw)):sub(1, mw))
-
+    mon.write(("Modules: " .. #installed .. "/" .. modules_lib.MAX_MODULES .. string.rep(" ", mw)):sub(1, mw))
     previewDirty = false
 end
 
 -- ============================================================
--- Screen: Connect to Mainframe
+-- Screen: Connect
 -- ============================================================
 
 local function screenConnect()
@@ -125,108 +137,103 @@ local function screenConnect()
     term.clear()
     term.setCursorPos(1, 1)
 
-    print("================================")
-    print("   JAVANET TERMINAL SETUP")
-    print("================================")
-    print("")
+    local W, H = term.getSize()
 
-    -- Check for existing config
+    -- Title
+    ui.centerWrite(2, "J A V A N E T", colors.lime, colors.black)
+    ui.centerWrite(3, "Terminal Setup", colors.gray, colors.black)
+    ui.fillLine(4, "-", colors.green)
+
+    -- Check existing config
     local existing = config.loadTerminal()
     if existing and existing.mainframeId and existing.mainframeId ~= 0 then
         mainframeId = existing.mainframeId
         terminalName = existing.terminalName or ""
         installed = existing.modules or {}
-        layoutMode = existing.layoutMode or "auto"
+        rebuildInstalledSet()
         bootPreset = (existing.bootConfig or {}).preset or "military"
-        term.setTextColor(colors.lime)
-        print("Existing config found.")
-        print("  Mainframe: #" .. mainframeId)
-        print("  Terminal:  " .. terminalName)
-        print("  Modules:   " .. #installed)
-        print("")
-        term.setTextColor(colors.white)
-        print("[E] Edit this terminal")
-        print("[N] Fresh setup")
-        print("[Q] Quit")
-        print("")
+
+        ui.write(3, 6, "Existing config found:", colors.lime, colors.black)
+        ui.write(3, 7, "Mainframe: #" .. mainframeId, colors.white, colors.black)
+        ui.write(3, 8, "Terminal:  " .. terminalName, colors.white, colors.black)
+        ui.write(3, 9, "Modules:   " .. #installed, colors.white, colors.black)
+
+        local btns = ui.buttonRow(11, {
+            { label = "Edit Terminal", id = "edit", style = "success" },
+            { label = "New Setup", id = "new" },
+            { label = "Quit", id = "quit", style = "danger" },
+        }, "center")
 
         while true do
-            local ev = {os.pullEvent("key")}
-            if ev[2] == keys.e then
-                -- Load faction config
-                factionConfig = config.loadFaction()
-                if factionConfig then ui.applyIdentity(factionConfig) end
-                screen = "builder"
-                return
-            elseif ev[2] == keys.n then
-                installed = {}
-                break
-            elseif ev[2] == keys.q then
-                screen = "quit"
-                return
+            local action, data = ui.waitForClick(btns)
+            if action == "button" then
+                if data.id == "edit" then
+                    factionConfig = config.loadFaction()
+                    if factionConfig then ui.applyIdentity(factionConfig) end
+                    screen = "builder"
+                    return
+                elseif data.id == "new" then
+                    installed = {}
+                    rebuildInstalledSet()
+                    break
+                elseif data.id == "quit" then
+                    screen = "quit"
+                    return
+                end
             end
         end
     end
 
-    -- Ask for mainframe ID
-    term.setTextColor(colors.white)
-    print("")
-    write("Mainframe computer ID: ")
+    -- Fresh setup: ask for mainframe ID
+    term.setBackgroundColor(colors.black)
+    term.clear()
+    ui.centerWrite(2, "J A V A N E T", colors.lime, colors.black)
+    ui.centerWrite(3, "Terminal Setup", colors.gray, colors.black)
+    ui.fillLine(4, "-", colors.green)
+
+    ui.write(3, 6, "Enter the mainframe computer ID.", colors.white, colors.black)
+    ui.write(3, 7, "(On mainframe, run 'id' to find it)", colors.gray, colors.black)
+    ui.write(3, 9, "Mainframe ID: ", colors.white, colors.black)
+    term.setCursorPos(17, 9)
     term.setTextColor(colors.yellow)
+    term.setCursorBlink(true)
     local idStr = read()
+    term.setCursorBlink(false)
     mainframeId = tonumber(idStr) or 0
 
     if mainframeId == 0 then
-        term.setTextColor(colors.red)
-        print("")
-        print("Invalid ID.")
-        print("On the mainframe, run: id")
-        print("It shows the computer number.")
-        sleep(3)
+        ui.centerWrite(11, "Invalid ID!", colors.red, colors.black)
+        sleep(2)
         return
     end
 
-    -- Open modem
-    term.setTextColor(colors.white)
-    print("")
-    print("Connecting to #" .. mainframeId .. "...")
+    -- Try connecting
+    ui.write(3, 11, "Connecting to #" .. mainframeId .. "...", colors.white, colors.black)
 
-    local ok, err = proto.openModem()
+    local ok = proto.openModem()
     if not ok then
-        term.setTextColor(colors.red)
-        print("No modem found!")
-        print("Attach a modem and restart.")
-        sleep(3)
+        ui.write(3, 12, "No modem found! Attach one first.", colors.red, colors.black)
+        ui.centerWrite(H - 1, "Click anywhere to continue", colors.gray, colors.black)
+        os.pullEvent("mouse_click")
         return
     end
 
-    -- Try to pull faction config from mainframe
     local response = proto.request(mainframeId, "faction_query", {}, 5)
     if response and response.payload then
         factionConfig = response.payload
-        term.setTextColor(colors.lime)
-        print("Connected!")
-        print("Faction: " .. (factionConfig.name or "?"))
+        ui.write(3, 12, "Connected! Faction: " .. (factionConfig.name or "?"), colors.lime, colors.black)
         ui.applyIdentity(factionConfig)
         config.saveFaction(factionConfig)
         bootPreset = factionConfig.bootPreset or "military"
     else
-        -- Mainframe didn't respond — manual fallback
-        term.setTextColor(colors.orange)
-        print("Mainframe not responding.")
-        print("Setting up manually.")
-        print("")
-
-        term.setTextColor(colors.white)
-        write("Faction name: ")
+        ui.write(3, 12, "Could not reach mainframe.", colors.orange, colors.black)
+        ui.write(3, 13, "Enter faction name manually:", colors.white, colors.black)
+        term.setCursorPos(3, 14)
         term.setTextColor(colors.yellow)
+        term.setCursorBlink(true)
         local fname = read()
-
-        factionConfig = {
-            name = (fname ~= "") and fname or "JAVANET",
-            subtitle = "FACILITY",
-            bootPreset = "military",
-        }
+        term.setCursorBlink(false)
+        factionConfig = { name = (fname ~= "") and fname or "JAVANET", subtitle = "FACILITY", bootPreset = "military" }
         ui.applyIdentity(factionConfig)
         config.saveFaction(factionConfig)
     end
@@ -236,212 +243,117 @@ local function screenConnect()
 end
 
 -- ============================================================
--- Screen: Module Builder (with proper scrolling)
+-- Screen: Module Builder (fully clickable)
 -- ============================================================
 
 local function screenBuilder()
     term.setBackgroundColor(colors.black)
     term.clear()
-
     local W, H = term.getSize()
 
-    -- Header bar
+    -- Header
     term.setCursorPos(1, 1)
     term.setBackgroundColor(colors.yellow)
     term.setTextColor(colors.black)
-    local hdr = " " .. ((factionConfig and factionConfig.name) or "JAVANET") .. " - TERMINAL BUILDER "
-    term.write((hdr .. string.rep(" ", W)):sub(1, W))
+    term.write((" " .. ((factionConfig and factionConfig.name) or "JAVANET") .. " - BUILDER" .. string.rep(" ", W)):sub(1, W))
     term.setBackgroundColor(colors.black)
 
-    -- Build flat display list (domain headers + modules)
-    local displayList = {}
-    local currentDomain = ""
-    for i, mod in ipairs(allModules) do
-        if mod.def.domain ~= currentDomain then
-            currentDomain = mod.def.domain
-            displayList[#displayList+1] = { type = "header", text = currentDomain:upper() }
-        end
-        displayList[#displayList+1] = { type = "module", text = mod.def.name, idx = i, id = mod.id }
-    end
+    -- Module count
+    local countText = #installed .. "/" .. modules_lib.MAX_MODULES
+    ui.write(W - #countText - 1, 2, countText, #installed >= modules_lib.MAX_MODULES and colors.red or colors.lime, colors.black)
+    ui.write(2, 2, "Tap to toggle modules:", colors.gray, colors.black)
 
-    -- Figure out which display row the selected module is on
-    local selectedRow = 1
-    for i, item in ipairs(displayList) do
-        if item.type == "module" and item.idx == catalogSelected then
-            selectedRow = i
-            break
-        end
-    end
-
-    -- List area
+    -- Clickable module list with checkboxes
     local listTop = 3
     local listBot = H - 4
     local listH = listBot - listTop + 1
 
-    -- Adjust scroll to keep selected row visible
-    if selectedRow <= catalogScroll then
-        catalogScroll = selectedRow - 1
-    end
-    if selectedRow > catalogScroll + listH then
-        catalogScroll = selectedRow - listH
+    -- Adjust scroll bounds
+    if catalogScroll > math.max(0, #displayList - listH) then
+        catalogScroll = math.max(0, #displayList - listH)
     end
 
-    -- Column header
-    term.setCursorPos(2, 2)
-    term.setTextColor(colors.gray)
-    term.write("Available Modules")
-    term.setCursorPos(W - 16, 2)
-    term.write(#installed .. "/" .. modules_lib.MAX_MODULES .. " selected")
+    local listHits = ui.clickableList(1, listTop, W, listH, displayList, catalogScroll, installedSet, { checkboxes = true })
 
-    -- Render visible rows
-    for r = 1, listH do
-        local idx = catalogScroll + r
-        local y = listTop + r - 1
-        term.setCursorPos(1, y)
+    -- Description of hovered/last clicked
+    -- (we show a generic hint for now)
+    ui.fillLine(H - 3, " ", nil, colors.black)
 
-        if idx >= 1 and idx <= #displayList then
-            local item = displayList[idx]
-
-            if item.type == "header" then
-                -- Domain header
-                term.setTextColor(colors.orange)
-                term.write("  -- " .. item.text .. " " .. string.rep("-", math.max(0, W - #item.text - 8)))
-            else
-                -- Module row
-                local isSel = (item.idx == catalogSelected)
-                local isOn = isInstalled(item.id)
-                local mark = isOn and "[X]" or "[ ]"
-                local arrow = isSel and "> " or "  "
-
-                if isSel and isOn then
-                    term.setTextColor(colors.lime)
-                elseif isSel then
-                    term.setTextColor(colors.yellow)
-                elseif isOn then
-                    term.setTextColor(colors.green)
-                else
-                    term.setTextColor(colors.white)
-                end
-                term.write((arrow .. mark .. " " .. item.text .. string.rep(" ", W)):sub(1, W))
-            end
-        end
-    end
-
-    -- Scroll indicator
-    if #displayList > listH then
-        local scrollPct = catalogScroll / math.max(1, #displayList - listH)
-        local barH = math.max(1, math.floor(listH * listH / #displayList))
-        local barPos = math.floor(scrollPct * (listH - barH))
-        for r = 0, listH - 1 do
-            term.setCursorPos(W, listTop + r)
-            if r >= barPos and r < barPos + barH then
-                term.setTextColor(colors.yellow)
-                term.write("|")
-            else
-                term.setTextColor(colors.gray)
-                term.write(":")
-            end
-        end
-    end
-
-    -- Description of selected module
-    term.setCursorPos(1, H - 2)
-    term.setTextColor(colors.gray)
-    local selMod = allModules[catalogSelected]
-    if selMod then
-        local desc = selMod.def.description or ""
-        term.write((" " .. desc .. string.rep(" ", W)):sub(1, W))
-    end
-
-    -- Installed list on bottom
-    term.setCursorPos(1, H - 1)
-    term.setTextColor(colors.cyan)
+    -- Installed summary
+    ui.write(1, H - 2, " ", colors.black, colors.black)
     local names = {}
     for _, m in ipairs(installed) do
         local d = modules_lib.getDef(m.id)
         names[#names+1] = d and d.name or m.id
     end
-    local instLine = #names > 0 and table.concat(names, ", ") or "(none)"
-    term.write((" " .. instLine .. string.rep(" ", W)):sub(1, W))
+    local instLine = #names > 0 and table.concat(names, ", ") or "(none selected)"
+    ui.write(1, H - 2, (" " .. instLine):sub(1, W), colors.cyan, colors.black)
 
-    -- Controls footer
-    term.setCursorPos(1, H)
-    term.setBackgroundColor(colors.gray)
-    term.setTextColor(colors.white)
-    term.write((" [Up/Dn]Scroll [Space]Toggle [S]ave+Deploy [Q]uit" .. string.rep(" ", W)):sub(1, W))
-    term.setBackgroundColor(colors.black)
+    -- Bottom button bar
+    local btns = ui.buttonRow(H - 1, {
+        { label = "Save & Deploy", id = "save", style = "success" },
+        { label = "Boot: " .. bootPreset, id = "boot" },
+        { label = "Quit", id = "quit", style = "danger" },
+    }, "center")
+
+    -- Footer hint
+    ui.write(1, H, (" Scroll: mouse wheel | Tap: toggle module"):sub(1, W), colors.gray, colors.black)
+
+    return btns, listHits
 end
 
 -- ============================================================
--- Screen: Save & Deploy
+-- Screen: Module Config (per-module settings)
 -- ============================================================
 
-local function screenSave()
+local function screenModuleConfig()
     term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.yellow)
     term.clear()
-    term.setCursorPos(1, 1)
+    local W, H = term.getSize()
 
-    print("================================")
-    print("     SAVE & DEPLOY")
-    print("================================")
-    print("")
+    ui.centerWrite(1, "MODULE SETTINGS", colors.yellow, colors.black)
+    ui.fillLine(2, "-", colors.green)
 
-    -- Terminal name
-    if terminalName == "" then
-        term.setTextColor(colors.white)
-        write("Terminal name: ")
-        term.setTextColor(colors.yellow)
-        terminalName = read()
-        if terminalName == "" then
-            terminalName = "Terminal-" .. os.getComputerID()
-        end
-    else
-        term.setTextColor(colors.white)
-        print("Name: " .. terminalName)
-        write("Keep? [Y/N]: ")
-        term.setTextColor(colors.yellow)
-        local yn = read()
-        if yn:lower() == "n" then
-            term.setTextColor(colors.white)
-            write("New name: ")
-            term.setTextColor(colors.yellow)
-            terminalName = read()
-            if terminalName == "" then
-                terminalName = "Terminal-" .. os.getComputerID()
-            end
-        end
-    end
-
-    -- Set mainframeId on all modules
-    for _, m in ipairs(installed) do
-        m.config.mainframeId = mainframeId
-    end
-
-    -- Per-module config fields
-    print("")
-    term.setTextColor(colors.white)
-    print("-- Module Settings --")
-    print("")
+    local row = 3
     for _, m in ipairs(installed) do
         local def = modules_lib.getDef(m.id)
         if def and def.config_fields then
-            term.setTextColor(colors.cyan)
-            print("[" .. (def.name or m.id) .. "]")
-            term.setTextColor(colors.white)
+            ui.write(2, row, "[" .. (def.name or m.id) .. "]", colors.cyan, colors.black)
+            row = row + 1
             for _, field in ipairs(def.config_fields) do
                 if field.key ~= "mainframeId" then
                     local cur = m.config[field.key]
                     if cur == nil then cur = field.default end
                     if cur == nil then cur = "" end
-                    write("  " .. field.label)
-                    term.setTextColor(colors.gray)
-                    write(" [" .. tostring(cur) .. "]")
-                    term.setTextColor(colors.white)
-                    write(": ")
+
+                    if row >= H - 2 then
+                        -- Screen full, let user scroll through with enter
+                        ui.write(2, H - 1, "Press ENTER for more...", colors.gray, colors.black)
+                        while true do
+                            local ev = {os.pullEvent()}
+                            if ev[1] == "key" and ev[2] == keys.enter then break end
+                            if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then break end
+                        end
+                        term.setBackgroundColor(colors.black)
+                        term.clear()
+                        ui.centerWrite(1, "MODULE SETTINGS", colors.yellow, colors.black)
+                        ui.fillLine(2, "-", colors.green)
+                        row = 3
+                    end
+
+                    ui.write(3, row, field.label, colors.white, colors.black)
+                    local valStr = " [" .. tostring(cur) .. "]"
+                    ui.write(3 + #field.label, row, valStr, colors.gray, colors.black)
+                    row = row + 1
+
+                    term.setCursorPos(5, row)
                     term.setTextColor(colors.yellow)
+                    term.setBackgroundColor(colors.black)
+                    term.setCursorBlink(true)
                     local val = read()
-                    term.setTextColor(colors.white)
+                    term.setCursorBlink(false)
+                    row = row + 1
+
                     if val ~= "" then
                         if field.type == "number" then
                             m.config[field.key] = tonumber(val) or cur
@@ -451,21 +363,71 @@ local function screenSave()
                         else
                             m.config[field.key] = val
                         end
-                    elseif cur ~= "" then
+                    elseif cur ~= nil and cur ~= "" then
                         m.config[field.key] = cur
                     end
                 end
             end
-            print("")
+            row = row + 1
+        end
+        m.config.mainframeId = mainframeId
+    end
+end
+
+-- ============================================================
+-- Screen: Save & Deploy
+-- ============================================================
+
+local function screenSave()
+    term.setBackgroundColor(colors.black)
+    term.clear()
+    local W, H = term.getSize()
+
+    ui.centerWrite(2, "SAVE & DEPLOY", colors.yellow, colors.black)
+    ui.fillLine(3, "-", colors.green)
+
+    -- Terminal name
+    if terminalName == "" then
+        ui.write(3, 5, "Terminal name:", colors.white, colors.black)
+        term.setCursorPos(18, 5)
+        term.setTextColor(colors.yellow)
+        term.setCursorBlink(true)
+        terminalName = read()
+        term.setCursorBlink(false)
+        if terminalName == "" then terminalName = "Terminal-" .. os.getComputerID() end
+    else
+        ui.write(3, 5, "Name: " .. terminalName, colors.white, colors.black)
+        local btns = ui.buttonRow(6, {
+            { label = "Keep Name", id = "keep", style = "success" },
+            { label = "Change", id = "change" },
+        }, "left")
+
+        while true do
+            local action, data = ui.waitForClick(btns)
+            if action == "button" then
+                if data.id == "change" then
+                    ui.write(3, 7, "New name:", colors.white, colors.black)
+                    term.setCursorPos(13, 7)
+                    term.setTextColor(colors.yellow)
+                    term.setCursorBlink(true)
+                    terminalName = read()
+                    term.setCursorBlink(false)
+                    if terminalName == "" then terminalName = "Terminal-" .. os.getComputerID() end
+                end
+                break
+            end
         end
     end
 
-    -- Save
+    -- Module-specific config
+    screenModuleConfig()
+
+    -- Save config
     local termCfg = {
         terminalName = terminalName,
         mainframeId = mainframeId,
         modules = installed,
-        layoutMode = layoutMode,
+        layoutMode = "auto",
         bootConfig = { preset = bootPreset },
         mirrorMonitor = monitor.hasPrimary(),
     }
@@ -476,83 +438,90 @@ local function screenSave()
     f.write('shell.run("/jnet/runtime/terminal.lua")')
     f.close()
 
-    -- Done
+    -- Done screen
+    term.setBackgroundColor(colors.black)
     term.clear()
-    term.setCursorPos(1, 1)
-    term.setTextColor(colors.lime)
-    print("================================")
-    print("   CONFIGURATION SAVED!")
-    print("================================")
-    print("")
-    term.setTextColor(colors.white)
-    print("Terminal:  " .. terminalName)
-    print("Modules:   " .. #installed)
-    print("Mainframe: #" .. mainframeId)
-    print("")
-    term.setTextColor(colors.yellow)
-    print("Rebooting in 3 seconds...")
-    sleep(3)
+    ui.centerWrite(3, "CONFIGURATION SAVED!", colors.lime, colors.black)
+    ui.fillLine(4, "=", colors.green)
+    ui.write(3, 6, "Terminal:  " .. terminalName, colors.white, colors.black)
+    ui.write(3, 7, "Modules:   " .. #installed, colors.white, colors.black)
+    ui.write(3, 8, "Mainframe: #" .. mainframeId, colors.white, colors.black)
+    ui.write(3, 9, "Boot:      " .. bootPreset, colors.white, colors.black)
+
+    ui.centerWrite(11, "Rebooting in 3 seconds...", colors.yellow, colors.black)
+    ui.centerWrite(12, "(tap to reboot now)", colors.gray, colors.black)
+
+    local timer = os.startTimer(3)
+    while true do
+        local ev = {os.pullEvent()}
+        if ev[1] == "timer" and ev[2] == timer then break end
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then break end
+        if ev[1] == "key" then break end
+    end
     os.reboot()
 end
 
 -- ============================================================
--- Main
+-- Main Loop
 -- ============================================================
 
 local function main()
     discoverModules()
     monitor.detectMonitors()
 
-    -- Check for existing faction config
     factionConfig = config.loadFaction()
-    if factionConfig then
-        ui.applyIdentity(factionConfig)
-    end
-
-    -- Check for existing terminal config
-    local existing = config.loadTerminal()
-    if existing and existing.mainframeId and existing.mainframeId ~= 0 then
-        -- Already configured — go straight to edit
-        mainframeId = existing.mainframeId
-        terminalName = existing.terminalName or ""
-        installed = existing.modules or {}
-        layoutMode = existing.layoutMode or "auto"
-        bootPreset = (existing.bootConfig or {}).preset or "military"
-        screen = "connect" -- still show connect screen for E/N/Q choice
-    end
+    if factionConfig then ui.applyIdentity(factionConfig) end
 
     while true do
         if screen == "connect" then
             screenConnect()
+
         elseif screen == "builder" then
-            screenBuilder()
+            local btns, listHits = screenBuilder()
             if previewDirty then renderPreview() end
 
-            local ev = {os.pullEvent()}
-            if ev[1] == "key" then
-                if ev[2] == keys.up then
-                    catalogSelected = math.max(1, catalogSelected - 1)
-                elseif ev[2] == keys.down then
-                    catalogSelected = math.min(#allModules, catalogSelected + 1)
-                elseif ev[2] == keys.space then
-                    local mod = allModules[catalogSelected]
-                    if mod then toggleModule(mod.id) end
-                elseif ev[2] == keys.s then
+            local action, data = ui.waitForClick(btns, listHits)
+
+            if action == "button" then
+                if data.id == "save" then
                     if #installed == 0 then
-                        local _, H = term.getSize()
-                        term.setCursorPos(2, H - 2)
-                        term.setTextColor(colors.red)
-                        term.write("Pick at least one module first!")
-                        sleep(1)
+                        ui.alert("No Modules", "Select at least one module first!")
                     else
                         screen = "save"
                     end
-                elseif ev[2] == keys.q then
+                elseif data.id == "boot" then
+                    local presets = {"military", "hacker", "corporate", "glitch", "stealth", "retro"}
+                    local idx = 1
+                    for i, p in ipairs(presets) do if p == bootPreset then idx = i; break end end
+                    idx = (idx % #presets) + 1
+                    bootPreset = presets[idx]
+                elseif data.id == "quit" then
                     screen = "quit"
                 end
+
+            elseif action == "list_click" then
+                -- Toggle the clicked module
+                local clickedId = data.id
+                -- Skip header clicks
+                local isHeader = false
+                for _, item in ipairs(displayList) do
+                    if item.id == clickedId and item.header then isHeader = true; break end
+                end
+                if not isHeader then
+                    toggleModule(clickedId)
+                end
+
+            elseif action == "scroll" then
+                catalogScroll = catalogScroll + data.direction
+                catalogScroll = math.max(0, math.min(#displayList - 10, catalogScroll))
+
+            elseif action == "key" then
+                if data.key == keys.q then screen = "quit" end
             end
+
         elseif screen == "save" then
             screenSave()
+
         elseif screen == "quit" then
             term.setBackgroundColor(colors.black)
             term.setTextColor(colors.white)

@@ -491,16 +491,23 @@ function M.confirmDialog(title, message, domain)
     M.centerWrite(by + 2, message, M.FG, M.BG)
     local yesX = bx + math.floor(bw / 4) - 2
     local noX = bx + math.floor(3 * bw / 4) - 2
-    M.write(yesX, by + 4, "[ YES ]", M.OK, M.BG)
-    M.write(noX, by + 4, "[ NO ]", M.ERR, M.BG)
+    local yesBtn = M.button(yesX, by + 4, "YES", "yes", M.BG, M.OK)
+    local noBtn = M.button(noX, by + 4, "NO", "no", M.BG, M.ERR)
     while true do
         local ev, p1, p2, p3 = os.pullEvent()
         if ev == "key" then
             if p1 == keys.y then return true end
             if p1 == keys.n or p1 == keys.backspace then return false end
+            if p1 == keys.enter then return true end
         elseif ev == "char" then
             if p1 == "y" or p1 == "Y" then return true end
             if p1 == "n" or p1 == "N" then return false end
+        elseif ev == "mouse_click" or ev == "monitor_touch" then
+            local cx = ev == "monitor_touch" and p2 or p2
+            local cy = ev == "monitor_touch" and p3 or p3
+            local hit = M.hitTest({yesBtn, noBtn}, cx, cy)
+            if hit == "yes" then return true end
+            if hit == "no" then return false end
         end
     end
 end
@@ -631,6 +638,152 @@ function M.formatTime(seconds)
     local s = seconds % 60
     if h > 0 then return string.format("%d:%02d:%02d", h, m, s) end
     return string.format("%d:%02d", m, s)
+end
+
+-- ============================================================
+-- Button System
+-- ============================================================
+
+-- Render a single clickable button. Returns {x, y, w, h, id} for hit testing.
+function M.button(x, y, label, id, fg, bg, selected)
+    fg = fg or M.ACCENT
+    bg = bg or M.BG
+    local text = " " .. label .. " "
+    if selected then
+        -- Invert colors for selected state
+        M.write(x, y, text, bg, fg)
+    else
+        M.write(x, y, text, fg, bg)
+    end
+    return { x = x, y = y, w = #text, h = 1, id = id or label }
+end
+
+-- Render a highlighted/active button
+function M.buttonHighlight(x, y, label, id)
+    return M.button(x, y, label, id, M.BG, M.OK, false)
+end
+
+-- Render a danger/red button
+function M.buttonDanger(x, y, label, id)
+    return M.button(x, y, label, id, M.BG, M.ERR, false)
+end
+
+-- Render a row of buttons, returns list of hit zones
+function M.buttonRow(y, buttons, align, spacing)
+    spacing = spacing or 2
+    local W = M.getSize()
+    local totalW = 0
+    for _, b in ipairs(buttons) do
+        totalW = totalW + #b.label + 2 + spacing
+    end
+    totalW = totalW - spacing
+
+    local startX
+    if align == "center" then
+        startX = math.max(1, math.floor((W - totalW) / 2) + 1)
+    elseif align == "right" then
+        startX = math.max(1, W - totalW)
+    else
+        startX = 2
+    end
+
+    local hits = {}
+    local cx = startX
+    for _, b in ipairs(buttons) do
+        local fg = b.fg or (b.style == "danger" and M.BG or (b.style == "success" and M.BG or M.ACCENT))
+        local bg = b.bg or (b.style == "danger" and M.ERR or (b.style == "success" and M.OK or M.BG))
+        local hit = M.button(cx, y, b.label, b.id or b.label, fg, bg, b.selected)
+        hits[#hits + 1] = hit
+        cx = cx + #b.label + 2 + spacing
+    end
+    return hits
+end
+
+-- Check if a click/touch event hits any button in a hit list
+function M.hitTest(hits, clickX, clickY)
+    for _, h in ipairs(hits) do
+        if clickX >= h.x and clickX < h.x + h.w and clickY >= h.y and clickY < h.y + h.h then
+            return h.id
+        end
+    end
+    return nil
+end
+
+-- Render a clickable list where items can be tapped to select
+-- Returns list of hit zones for each item
+function M.clickableList(x, y, w, h, items, scroll, selectedSet, opts)
+    opts = opts or {}
+    scroll = scroll or 0
+    selectedSet = selectedSet or {}
+    local checkboxes = opts.checkboxes
+    local hits = {}
+
+    for i = 1, h do
+        local idx = scroll + i
+        local row = y + i - 1
+        if idx >= 1 and idx <= #items then
+            local item = items[idx]
+            local text = type(item) == "table" and (item.text or item.name or tostring(item)) or tostring(item)
+            local itemId = type(item) == "table" and (item.id or idx) or idx
+            local isSelected = selectedSet[itemId]
+
+            local prefix = ""
+            if checkboxes then
+                prefix = isSelected and "[X] " or "[ ] "
+            end
+
+            local displayText = prefix .. text
+            if #displayText > w then displayText = displayText:sub(1, w - 1) .. "." end
+            displayText = displayText .. string.rep(" ", math.max(0, w - #displayText))
+
+            local fg = M.FG
+            local bg = M.BG
+            if type(item) == "table" and item.color then fg = item.color end
+            if isSelected and not checkboxes then fg = M.BG; bg = M.HIGHLIGHT end
+            if type(item) == "table" and item.header then fg = M.WARN; bg = M.BG end
+
+            M.write(x, row, displayText, fg, bg)
+            hits[#hits + 1] = { x = x, y = row, w = w, h = 1, id = itemId, idx = idx }
+        else
+            M.write(x, row, string.rep(" ", w), M.FG, M.BG)
+        end
+    end
+    return hits
+end
+
+-- Combined event handler for a screen with buttons and a clickable list
+-- Returns: action string, details table
+function M.waitForClick(buttonHits, listHits, opts)
+    opts = opts or {}
+    while true do
+        local ev = {os.pullEvent()}
+        if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
+            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
+
+            -- Check buttons
+            if buttonHits then
+                local btnId = M.hitTest(buttonHits, cx, cy)
+                if btnId then return "button", { id = btnId } end
+            end
+
+            -- Check list items
+            if listHits then
+                local listId = M.hitTest(listHits, cx, cy)
+                if listId then
+                    for _, h in ipairs(listHits) do
+                        if h.id == listId then
+                            return "list_click", { id = listId, idx = h.idx }
+                        end
+                    end
+                end
+            end
+        elseif ev[1] == "mouse_scroll" then
+            return "scroll", { direction = ev[2] }
+        elseif ev[1] == "key" then
+            return "key", { key = ev[2] }
+        end
+    end
 end
 
 _JNET_LOADED["jnet_ui"] = M

@@ -583,17 +583,17 @@ local function main()
         return
     end
 
-    -- Boot animation
-    anim.bootSequence({
-        preset = identity.bootPreset or "military",
-        module_names = {"Protocol", "Database", "Security", "Network", "Modules"},
-    })
-
-    -- Monitor setup — mirror to both computer + monitor
+    -- Monitor setup — mirror to both computer + monitor BEFORE boot
     monitor.detectMonitors()
     if monitor.hasPrimary() then
         monitor.enableMirror()
     end
+
+    -- Boot animation (now shows on both screens)
+    anim.bootSequence({
+        preset = identity.bootPreset or "military",
+        module_names = {"Protocol", "Database", "Security", "Network", "Modules"},
+    })
 
     -- Main event loop
     db.logFrom("MAINFRAME", "ONLINE", "ID #" .. os.getComputerID())

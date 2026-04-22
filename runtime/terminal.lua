@@ -239,6 +239,7 @@ local function main()
     if monitor.hasPrimary() then
         monitor.enableMirror()  -- both computer screen AND monitor show the same thing
         usingMonitor = true
+        sleep(0.1)  -- let monitor initialize before drawing
     end
 
     -- Boot animation (now renders on monitor if present)

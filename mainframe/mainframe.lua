@@ -422,9 +422,20 @@ function handleAdminAction(senderId, payload)
         return { success = true }
 
     elseif cmd == "set_identity" then
-        db.setIdentity(payload.identity)
-        db.logFrom("ADMIN #" .. senderId, "SET IDENTITY", payload.identity.name or "")
+        local identity = payload.identity or { name = payload.name, subtitle = payload.subtitle, motto = payload.motto }
+        db.setIdentity(identity)
+        db.logFrom("ADMIN #" .. senderId, "SET IDENTITY", identity.name or "")
         proto.broadcast("identity_update", db.getIdentity())
+        return { success = true }
+
+    elseif cmd == "register_disk" then
+        db.registerDisk(payload.diskId, payload.owner, payload.clearance, payload.faction)
+        db.logFrom("ADMIN #" .. senderId, "REGISTER DISK", tostring(payload.diskId) .. " owner:" .. (payload.owner or "?"))
+        return { success = true }
+
+    elseif cmd == "set_admin_passcode" then
+        db.setPasscode("admin", payload.newPasscode)
+        db.logFrom("ADMIN #" .. senderId, "CHANGE PASSCODE", "admin")
         return { success = true }
 
     elseif cmd == "set_clearance" then

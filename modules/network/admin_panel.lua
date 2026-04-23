@@ -1,15 +1,62 @@
 -- admin_panel.lua — Network Module
--- Full admin: manage personnel, doors, entities, zones, passcodes, identity.
+-- Full admin: manage personnel, doors, entities, zones, and more.
+-- Tap menu items to activate. Tap login to authenticate.
 
 local modules = dofile("/jnet/lib/jnet_modules.lua")
 local proto = dofile("/jnet/lib/jnet_proto.lua")
 local ui = dofile("/jnet/lib/jnet_ui.lua")
 
+local MENU = {
+    { id = "add_person",    label = "Add Personnel" },
+    { id = "add_zone",      label = "Add Zone" },
+    { id = "add_entity",    label = "Add Entity" },
+    { id = "register_door", label = "Register Door" },
+    { id = "issue_card",    label = "Issue Card" },
+    { id = "set_tier",      label = "Set Security Tier" },
+    { id = "add_archive",   label = "Add Archive Folder" },
+    { id = "set_identity",  label = "Set Identity" },
+    { id = "set_passcode",  label = "Set Passcode" },
+}
+
+-- Run an admin form: takes over the screen, returns to module after
+local function adminForm(self, title, fields)
+    ui.clear()
+    ui.header(ui.facilityName, title)
+
+    local result = {}
+    local row = 4
+    for _, field in ipairs(fields) do
+        ui.write(3, row, field.label .. ":", ui.FG, ui.BG)
+        row = row + 1
+        term.setCursorPos(5, row)
+        term.setTextColor(ui.ACCENT)
+        term.setBackgroundColor(ui.BG)
+        term.setCursorBlink(true)
+        if field.type == "password" then
+            result[field.key] = read("*")
+        else
+            result[field.key] = read()
+        end
+        term.setCursorBlink(false)
+        row = row + 1
+    end
+    return result
+end
+
+local function sendAdmin(self, command, data)
+    local mfId = self.config.mainframeId
+    if not mfId then return end
+    data = data or {}
+    data.command = command
+    data.passcode = self.state.adminPass or ""
+    proto.send(tonumber(mfId), "admin_command", data)
+end
+
 modules.register("admin_panel", {
     name = "Admin Panel",
     domain = "network",
-    min_size = { w = 30, h = 10 },
-    pref_size = { w = 48, h = 16 },
+    min_size = { w = 25, h = 8 },
+    pref_size = { w = 40, h = 16 },
     peripherals = {},
     config_fields = {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
@@ -18,148 +65,223 @@ modules.register("admin_panel", {
     init = function(self)
         self.state.scroll = 0
         self.state.authenticated = false
-        self.state.adminPass = nil
-        self.state.view = "menu"
+        self.state.adminPass = ""
         self.state.selected = 1
-        self.state.menuItems = {
-            "Personnel Management", "Zone Management", "Entity Management",
-            "Door Registration", "Card Management", "Security Tiers",
-            "Archive Management", "Identity Settings", "Passcode Settings",
-            "View Pending Terminals", "View Infections", "View Log",
-        }
+        self.state.statusMsg = ""
+        self.state.statusColor = ui.DIM
     end,
 
     render = function(self, panel)
         self._panel = panel
+        local lines = {}
+
         if not self.state.authenticated then
-            ui.write(panel.x, panel.y + math.floor(panel.h/2), "ADMIN LOGIN REQUIRED", ui.WARN, ui.BG)
-            ui.write(panel.x, panel.y + math.floor(panel.h/2) + 1, "Tap or ENTER", ui.DIM, ui.BG)
-            return
-        end
-        if self.state.view == "menu" then
-            for i, item in ipairs(self.state.menuItems) do
-                local row = panel.y + i - 1
-                if row >= panel.y + panel.h then break end
+            lines[#lines+1] = {text = "ADMIN PANEL", color = ui.FG}
+            lines[#lines+1] = ""
+            lines[#lines+1] = {text = "Authentication required.", color = ui.DIM}
+            lines[#lines+1] = ""
+            lines[#lines+1] = {text = "[ TAP TO LOGIN ]", color = ui.WARN}
+        else
+            lines[#lines+1] = {text = "ADMIN PANEL", color = ui.FG}
+            lines[#lines+1] = ""
+
+            for i, item in ipairs(MENU) do
                 local prefix = (i == self.state.selected) and "> " or "  "
-                ui.write(panel.x, row, prefix .. item, i == self.state.selected and ui.ACCENT or ui.FG, ui.BG)
+                lines[#lines+1] = {
+                    text = prefix .. item.label,
+                    color = i == self.state.selected and ui.ACCENT or ui.FG,
+                }
             end
 
-        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
-            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
-            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
-            -- Click on list items to select and activate
-            if self._panel then
-                local relY = cy - self._panel.y
-                if relY >= 1 and relY <= self._panel.h then
-                    self.state.selected = relY
-                    self.dirty = true
-                end
+            lines[#lines+1] = ""
+            lines[#lines+1] = {text = "Tap item or use arrows+ENTER", color = ui.DIM}
+
+            if self.state.statusMsg and #self.state.statusMsg > 0 then
+                lines[#lines+1] = {text = self.state.statusMsg, color = self.state.statusColor or ui.DIM}
             end
         end
+
+        self.state.scroll = ui.renderPanelContent(panel, lines, self.state.scroll)
     end,
 
     handleEvent = function(self, ev)
         ui.handlePanelScroll(self, ev)
+
+        -- Login on tap or enter when not authenticated
+        if not self.state.authenticated then
+            if ev[1] == "mouse_click" or ev[1] == "monitor_touch" or
+               (ev[1] == "key" and ev[2] == keys.enter) then
+                local result = adminForm(self, "ADMIN LOGIN", {
+                    { key = "pass", label = "Admin Passcode", type = "password" },
+                })
+                self.state.adminPass = result.pass or ""
+                self.state.authenticated = true
+                self.dirty = true
+            end
+            return
+        end
+
+        -- Menu navigation
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then
-                local relY = cy - self._panel.y + 1
-                if relY >= 1 then
+                -- Menu items start at line 3 in the rendered content (after header + blank)
+                local relY = cy - self._panel.y - 1  -- offset for header+blank
+                if relY >= 1 and relY <= #MENU then
                     self.state.selected = relY
-                    self.dirty = true
-                end
-            end
-        elseif ev[1] == "key" then
-            if not self.state.authenticated and ev[2] == keys.enter then
-                ui.clear()
-                ui.header(ui.facilityName, "ADMIN LOGIN")
-                local pass = ui.passwordPrompt(5, "Admin passcode: ")
-                self.state.adminPass = pass
-                self.state.authenticated = true
-                self.dirty = true
-                return
-            end
-            if self.state.view == "menu" then
-                if ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
-                elseif ev[2] == keys.down then self.state.selected = math.min(#self.state.menuItems, self.state.selected + 1); self.dirty = true
-                elseif ev[2] == keys.enter then
-                    local mfId = self.config.mainframeId
-                    local pass = self.state.adminPass
-                    local sel = self.state.selected
-                    if sel == 1 and mfId then
-                        -- Personnel: interactive add
-                        ui.clear()
-                        ui.header(ui.facilityName, "ADD PERSONNEL")
-                        local name = ui.prompt(4, "Name: ")
-                        local cl = tonumber(ui.prompt(6, "Clearance: ")) or 5
-                        local dept = ui.prompt(8, "Department: ")
-                        if name and #name > 0 then
-                            proto.send(tonumber(mfId), "admin_command", { passcode = pass, command = "add_person", name = name, clearance = cl, department = dept })
-                        end
-                        self.dirty = true
-                    elseif sel == 2 and mfId then
-                        ui.clear()
-                        ui.header(ui.facilityName, "ADD ZONE")
-                        local zone = ui.prompt(4, "Zone name: ")
-                        if zone and #zone > 0 then
-                            proto.send(tonumber(mfId), "admin_command", { passcode = pass, command = "add_zone", zone = zone })
-                        end
-                        self.dirty = true
-                    elseif sel == 3 and mfId then
-                        ui.clear()
-                        ui.header(ui.facilityName, "ADD ENTITY")
-                        local eid = ui.prompt(4, "Entity ID: ")
-                        local ename = ui.prompt(5, "Name: ")
-                        local eclass = ui.prompt(6, "Class: ")
-                        local ezone = ui.prompt(7, "Zone: ")
-                        local edesc = ui.prompt(8, "Description: ")
-                        if eid and #eid > 0 then
-                            proto.send(tonumber(mfId), "admin_command", { passcode = pass, command = "add_entity", entityId = eid, name = ename, class = eclass, zone = ezone, description = edesc })
-                        end
-                        self.dirty = true
-                    elseif sel == 4 and mfId then
-                        ui.clear()
-                        ui.header(ui.facilityName, "REGISTER DOOR")
-                        local compId = tonumber(ui.prompt(4, "Computer ID: "))
-                        local zone = ui.prompt(5, "Zone: ")
-                        local minCl = tonumber(ui.prompt(6, "Min clearance: ")) or 5
-                        local tier = tonumber(ui.prompt(7, "Security tier (1-5): ")) or 2
-                        if compId then
-                            proto.send(tonumber(mfId), "admin_command", { passcode = pass, command = "register_door", compId = compId, zone = zone, minClearance = minCl, securityTier = tier })
-                        end
-                        self.dirty = true
-                    elseif sel == 6 and mfId then
-                        ui.clear()
-                        ui.header(ui.facilityName, "SET SECURITY TIER")
-                        local res = ui.prompt(4, "Resource/Computer ID: ")
-                        local tier = tonumber(ui.prompt(5, "Tier (1-5): ")) or 2
-                        if res then proto.send(tonumber(mfId), "admin_command", { passcode = pass, command = "set_security_tier", resource = res, tier = tier }) end
-                        self.dirty = true
-                    elseif sel == 7 and mfId then
-                        ui.clear()
-                        ui.header(ui.facilityName, "ADD ARCHIVE FOLDER")
-                        local fname = ui.prompt(4, "Folder name: ")
-                        local fcl = tonumber(ui.prompt(5, "Min clearance: ")) or 5
-                        if fname then proto.send(tonumber(mfId), "admin_command", { passcode = pass, command = "archive_add_folder", folderName = fname, minClearance = fcl }) end
-                        self.dirty = true
-                    end
-                elseif ev[2] == keys.backspace then
-                    self.state.authenticated = false
-                    self.dirty = true
+                    self:_runAction(MENU[relY].id)
                 end
             end
 
-        elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
-            local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
-            local cx = ev[1] == "monitor_touch" and ev[3] or ev[3]
-            -- Click on list items to select and activate
-            if self._panel then
-                local relY = cy - self._panel.y
-                if relY >= 1 and relY <= self._panel.h then
-                    self.state.selected = relY
-                    self.dirty = true
-                end
+        elseif ev[1] == "key" then
+            if ev[2] == keys.up then
+                self.state.selected = math.max(1, self.state.selected - 1)
+                self.dirty = true
+            elseif ev[2] == keys.down then
+                self.state.selected = math.min(#MENU, self.state.selected + 1)
+                self.dirty = true
+            elseif ev[2] == keys.enter then
+                local item = MENU[self.state.selected]
+                if item then self:_runAction(item.id) end
+            elseif ev[2] == keys.backspace then
+                self.state.authenticated = false
+                self.state.statusMsg = ""
+                self.dirty = true
             end
         end
     end,
 })
+
+-- Action handler
+local def = modules.getDef("admin_panel")
+function def._runAction(self, actionId)
+    if actionId == "add_person" then
+        local r = adminForm(self, "ADD PERSONNEL", {
+            { key = "name", label = "Name" },
+            { key = "clearance", label = "Clearance Level (number)" },
+            { key = "department", label = "Department" },
+        })
+        if r.name and #r.name > 0 then
+            sendAdmin(self, "add_person", {
+                name = r.name,
+                clearance = tonumber(r.clearance) or 1,
+                department = r.department or "",
+            })
+            self.state.statusMsg = "Added: " .. r.name
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "add_zone" then
+        local r = adminForm(self, "ADD ZONE", {
+            { key = "zone", label = "Zone Name" },
+        })
+        if r.zone and #r.zone > 0 then
+            sendAdmin(self, "add_zone", { zone = r.zone })
+            self.state.statusMsg = "Zone added: " .. r.zone
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "add_entity" then
+        local r = adminForm(self, "ADD ENTITY", {
+            { key = "entityId", label = "Entity ID (e.g. SCP-173)" },
+            { key = "name", label = "Name" },
+            { key = "class", label = "Class (Safe/Euclid/Keter)" },
+            { key = "zone", label = "Containment Zone" },
+            { key = "description", label = "Description" },
+        })
+        if r.entityId and #r.entityId > 0 then
+            sendAdmin(self, "add_entity", r)
+            self.state.statusMsg = "Entity added: " .. r.entityId
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "register_door" then
+        local r = adminForm(self, "REGISTER DOOR", {
+            { key = "compId", label = "Door Computer ID" },
+            { key = "name", label = "Door Name" },
+            { key = "zone", label = "Zone" },
+            { key = "minClearance", label = "Min Clearance (number)" },
+            { key = "securityTier", label = "Security Tier (1-5)" },
+        })
+        if r.compId then
+            sendAdmin(self, "register_door", {
+                compId = tonumber(r.compId),
+                name = r.name or "",
+                zone = r.zone or "",
+                minClearance = tonumber(r.minClearance) or 1,
+                securityTier = tonumber(r.securityTier) or 2,
+            })
+            self.state.statusMsg = "Door registered: #" .. r.compId
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "issue_card" then
+        local r = adminForm(self, "ISSUE CARD", {
+            { key = "diskId", label = "Floppy Disk ID" },
+            { key = "owner", label = "Owner Name" },
+            { key = "clearance", label = "Clearance Level (number)" },
+        })
+        if r.diskId then
+            sendAdmin(self, "register_disk", {
+                diskId = tonumber(r.diskId) or r.diskId,
+                owner = r.owner or "",
+                clearance = tonumber(r.clearance) or 1,
+            })
+            self.state.statusMsg = "Card issued: disk " .. r.diskId
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "set_tier" then
+        local r = adminForm(self, "SET SECURITY TIER", {
+            { key = "resource", label = "Computer ID or Resource" },
+            { key = "tier", label = "Tier (1-5)" },
+        })
+        if r.resource then
+            sendAdmin(self, "set_security_tier", {
+                resource = r.resource,
+                tier = tonumber(r.tier) or 2,
+            })
+            self.state.statusMsg = "Tier set: " .. r.resource .. " = T" .. (r.tier or "?")
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "add_archive" then
+        local r = adminForm(self, "ADD ARCHIVE FOLDER", {
+            { key = "folderName", label = "Folder Name" },
+            { key = "minClearance", label = "Min Clearance (number)" },
+        })
+        if r.folderName and #r.folderName > 0 then
+            sendAdmin(self, "archive_add_folder", {
+                folderName = r.folderName,
+                minClearance = tonumber(r.minClearance) or 1,
+            })
+            self.state.statusMsg = "Folder added: " .. r.folderName
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "set_identity" then
+        local r = adminForm(self, "SET IDENTITY", {
+            { key = "name", label = "Facility Name" },
+            { key = "subtitle", label = "Subtitle" },
+            { key = "motto", label = "Motto" },
+        })
+        if r.name and #r.name > 0 then
+            sendAdmin(self, "set_identity", r)
+            self.state.statusMsg = "Identity updated"
+            self.state.statusColor = ui.OK
+        end
+
+    elseif actionId == "set_passcode" then
+        local r = adminForm(self, "SET ADMIN PASSCODE", {
+            { key = "newPass", label = "New Passcode", type = "password" },
+        })
+        if r.newPass and #r.newPass > 0 then
+            sendAdmin(self, "set_admin_passcode", { newPasscode = r.newPass })
+            self.state.adminPass = r.newPass
+            self.state.statusMsg = "Passcode changed"
+            self.state.statusColor = ui.OK
+        end
+    end
+
+    self.dirty = true
+end

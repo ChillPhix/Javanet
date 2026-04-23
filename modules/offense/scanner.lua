@@ -47,7 +47,7 @@ modules.register("scanner", {
             if ev[2] == keys.s then
                 self.state.scanning = true
                 self.dirty = true
-                proto.sendAtk(65535, "probe", { scanner = os.getComputerID() })
+                proto.broadcastAtk("probe", { scanner = os.getComputerID() })
                 os.startTimer(3)
             elseif ev[2] == keys.up then self.state.selected = math.max(1, self.state.selected - 1); self.dirty = true
             elseif ev[2] == keys.down then self.state.selected = self.state.selected + 1; self.dirty = true

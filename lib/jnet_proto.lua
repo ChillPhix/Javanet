@@ -193,11 +193,15 @@ end
 -- ============================================================
 
 function M.openModem()
-    local modem = peripheral.find("modem")
-    if not modem then return false, "No modem found" end
-    local name = peripheral.getName(modem)
-    if not rednet.isOpen(name) then rednet.open(name) end
-    return true, name
+    local modems = { peripheral.find("modem") }
+    if #modems == 0 then return false, "No modem found" end
+    local opened = {}
+    for _, modem in ipairs(modems) do
+        local name = peripheral.getName(modem)
+        if not rednet.isOpen(name) then rednet.open(name) end
+        opened[#opened + 1] = name
+    end
+    return true, opened[1]
 end
 
 function M.findRawModem()
@@ -274,6 +278,12 @@ end
 function M.sendAtk(targetId, msgType, payload)
     local body = { type = msgType, payload = payload, ts = os.epoch("utc") / 1000, sender = os.getComputerID() }
     rednet.send(targetId, body, M.ATK_PROTOCOL)
+    return true
+end
+
+function M.broadcastAtk(msgType, payload)
+    local body = { type = msgType, payload = payload, ts = os.epoch("utc") / 1000, sender = os.getComputerID() }
+    rednet.broadcast(body, M.ATK_PROTOCOL)
     return true
 end
 

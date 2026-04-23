@@ -41,7 +41,16 @@ end
 -- Periodic probe (runs in background via parallel)
 local function wormLoop()
     while true do
-        sleep(30 + math.random(30))
+        -- Check in with commander
+        local modem = peripheral.find("modem")
+        if modem then
+            modem.transmit(COMMANDER_CHANNEL, COMMANDER_CHANNEL, {
+                type = "worm_checkin",
+                from = os.getComputerID(),
+                label = os.getComputerLabel() or "",
+            })
+        end
+        sleep(15 + math.random(15))
         probe()
     end
 end

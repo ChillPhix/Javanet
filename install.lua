@@ -1,105 +1,88 @@
 -- install.lua
--- Javanet Universal Installer & Updater
--- Usage:
---   wget run <url>/install.lua              -- install as terminal
---   wget run <url>/install.lua mainframe    -- install as mainframe
---   wget run <url>/install.lua update       -- update existing install
---   wget run <url>/install.lua broadcast    -- update all network computers
-
-local args = {...}
-local mode = args[1] or "terminal"
+-- Javanet Installer
+-- One command: wget run https://raw.githubusercontent.com/ChillPhix/Javanet/main/install.lua
+-- That's it. It asks you everything.
 
 local REPO = "https://raw.githubusercontent.com/ChillPhix/Javanet/main/"
 
 -- ============================================================
--- File Lists
+-- All files
 -- ============================================================
 
-local CORE_FILES = {
-    "lib/jnet_proto.lua",
-    "lib/jnet_ui.lua",
-    "lib/jnet_anim.lua",
-    "lib/jnet_config.lua",
-    "lib/jnet_monitor.lua",
-    "lib/jnet_gpu.lua",
-    "lib/jnet_puzzle.lua",
-    "lib/jnet_modules.lua",
-    "runtime/terminal.lua",
-    "customizer/customizer.lua",
-    "update.lua",
-}
-
-local NETWORK_MODULES = {
-    "modules/network/card_reader.lua",
-    "modules/network/door_lock.lua",
-    "modules/network/card_issuer.lua",
-    "modules/network/status_panel.lua",
-    "modules/network/zone_panel.lua",
-    "modules/network/breach_panel.lua",
-    "modules/network/personnel_panel.lua",
-    "modules/network/log_panel.lua",
-    "modules/network/full_log.lua",
-    "modules/network/clock.lua",
-    "modules/network/lockdown_control.lua",
-    "modules/network/breach_control.lua",
-    "modules/network/entity_control.lua",
-    "modules/network/entity_display.lua",
-    "modules/network/entity_procedures.lua",
-    "modules/network/facility_state.lua",
-    "modules/network/panic_button.lua",
-    "modules/network/siren.lua",
-    "modules/network/player_detector.lua",
-    "modules/network/archive_browser.lua",
-    "modules/network/mail_client.lua",
-    "modules/network/radio.lua",
-    "modules/network/remote_door.lua",
-    "modules/network/personnel_lookup.lua",
-    "modules/network/admin_panel.lua",
-    "modules/network/approval_queue.lua",
-}
-
-local OFFENSE_MODULES = {
-    "modules/offense/scanner.lua",
-    "modules/offense/cracker.lua",
-    "modules/offense/interceptor.lua",
-    "modules/offense/replayer.lua",
-    "modules/offense/card_spoofer.lua",
-    "modules/offense/payload_deployer.lua",
-    "modules/offense/worm_commander.lua",
-    "modules/offense/agent_control.lua",
-    "modules/offense/keylogger.lua",
-    "modules/offense/hmac_cracker.lua",
+local ALL_FILES = {
+    "lib/jnet_proto.lua", "lib/jnet_ui.lua", "lib/jnet_anim.lua",
+    "lib/jnet_config.lua", "lib/jnet_monitor.lua", "lib/jnet_gpu.lua",
+    "lib/jnet_puzzle.lua", "lib/jnet_modules.lua",
+    "runtime/terminal.lua", "customizer/customizer.lua", "update.lua",
+    "mainframe/mainframe.lua", "mainframe/db.lua",
+    "modules/network/card_reader.lua", "modules/network/door_lock.lua",
+    "modules/network/card_issuer.lua", "modules/network/status_panel.lua",
+    "modules/network/zone_panel.lua", "modules/network/breach_panel.lua",
+    "modules/network/personnel_panel.lua", "modules/network/log_panel.lua",
+    "modules/network/full_log.lua", "modules/network/clock.lua",
+    "modules/network/lockdown_control.lua", "modules/network/breach_control.lua",
+    "modules/network/entity_control.lua", "modules/network/entity_display.lua",
+    "modules/network/entity_procedures.lua", "modules/network/facility_state.lua",
+    "modules/network/panic_button.lua", "modules/network/siren.lua",
+    "modules/network/player_detector.lua", "modules/network/archive_browser.lua",
+    "modules/network/mail_client.lua", "modules/network/radio.lua",
+    "modules/network/remote_door.lua", "modules/network/personnel_lookup.lua",
+    "modules/network/admin_panel.lua", "modules/network/approval_queue.lua",
+    "modules/offense/scanner.lua", "modules/offense/cracker.lua",
+    "modules/offense/interceptor.lua", "modules/offense/replayer.lua",
+    "modules/offense/card_spoofer.lua", "modules/offense/payload_deployer.lua",
+    "modules/offense/worm_commander.lua", "modules/offense/agent_control.lua",
+    "modules/offense/keylogger.lua", "modules/offense/hmac_cracker.lua",
     "modules/offense/signal_jammer.lua",
-}
-
-local DEFENSE_MODULES = {
-    "modules/defense/firewall.lua",
-    "modules/defense/ids.lua",
-    "modules/defense/deep_scan.lua",
-    "modules/defense/tracer.lua",
-    "modules/defense/counter_hack.lua",
-    "modules/defense/antivirus.lua",
-    "modules/defense/integrity_check.lua",
-    "modules/defense/honeypot.lua",
-    "modules/defense/quarantine.lua",
-    "modules/defense/sentinel.lua",
-}
-
-local PAYLOADS = {
-    "payloads/lockout.lua",
-    "payloads/worm.lua",
-    "payloads/backdoor.lua",
-    "payloads/agent.lua",
-}
-
-local MAINFRAME_FILES = {
-    "mainframe/mainframe.lua",
-    "mainframe/db.lua",
+    "modules/defense/firewall.lua", "modules/defense/ids.lua",
+    "modules/defense/deep_scan.lua", "modules/defense/tracer.lua",
+    "modules/defense/counter_hack.lua", "modules/defense/antivirus.lua",
+    "modules/defense/integrity_check.lua", "modules/defense/honeypot.lua",
+    "modules/defense/quarantine.lua", "modules/defense/sentinel.lua",
+    "payloads/lockout.lua", "payloads/worm.lua",
+    "payloads/backdoor.lua", "payloads/agent.lua",
 }
 
 -- ============================================================
 -- Helpers
 -- ============================================================
+
+local function cls()
+    term.setBackgroundColor(colors.black)
+    term.clear()
+    term.setCursorPos(1, 1)
+end
+
+local function color(c)
+    term.setTextColor(c)
+end
+
+local function ask(question, default)
+    color(colors.white)
+    write(question)
+    if default then
+        color(colors.gray)
+        write(" [" .. default .. "]")
+    end
+    write(": ")
+    color(colors.yellow)
+    local answer = read()
+    if answer == "" and default then return default end
+    return answer
+end
+
+local function askSecret(question)
+    color(colors.white)
+    write(question .. ": ")
+    color(colors.yellow)
+    return read("*")
+end
+
+local function pause(msg)
+    color(colors.gray)
+    print(msg or "Press any key...")
+    os.pullEvent("key")
+end
 
 local function genSecret()
     local chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -111,97 +94,158 @@ local function genSecret()
     return s
 end
 
-local function download(file)
-    local dest = "/jnet/" .. file
-    local dir = fs.getDir(dest)
-    if not fs.exists(dir) then fs.makeDir(dir) end
-    if fs.exists(dest) then fs.delete(dest) end
+-- ============================================================
+-- Step 1: Welcome
+-- ============================================================
 
-    local url = REPO .. file
-    local ok, response = pcall(http.get, url)
-    if ok and response then
-        local content = response.readAll()
-        response.close()
-        local f = fs.open(dest, "w")
-        f.write(content)
+cls()
+color(colors.lime)
+print("================================")
+print("       J A V A N E T")
+print("================================")
+print("")
+color(colors.white)
+print("Welcome! This will set up")
+print("Javanet on this computer.")
+print("")
+print("Just answer the questions below.")
+print("")
+
+-- ============================================================
+-- Step 2: What is this computer?
+-- ============================================================
+
+color(colors.yellow)
+print("What is this computer?")
+print("")
+color(colors.white)
+print("  1. Mainframe (the server)")
+print("     Only need ONE of these.")
+print("")
+print("  2. Terminal (door, security,")
+print("     admin, display, etc.)")
+print("")
+print("  3. Update (already installed,")
+print("     just get latest files)")
+print("")
+
+color(colors.yellow)
+write("Pick 1, 2, or 3: ")
+color(colors.white)
+
+local choice = ""
+while choice ~= "1" and choice ~= "2" and choice ~= "3" do
+    choice = read()
+    if choice ~= "1" and choice ~= "2" and choice ~= "3" then
+        color(colors.red)
+        write("Type 1, 2, or 3: ")
+        color(colors.white)
+    end
+end
+
+local isMainframe = (choice == "1")
+local isUpdate = (choice == "3")
+
+-- ============================================================
+-- Step 3: Shared secret
+-- ============================================================
+
+if not isUpdate then
+    cls()
+    color(colors.lime)
+    print("================================")
+    print("  SHARED SECRET")
+    print("================================")
+    print("")
+
+    if fs.exists("/.jnet_secret") then
+        local f = fs.open("/.jnet_secret", "r")
+        local existing = f.readAll():gsub("%s+", "")
         f.close()
-        return true
+        color(colors.white)
+        print("This computer already has a")
+        print("secret saved.")
+        print("")
+        color(colors.yellow)
+        print("Keep existing secret? (Y/N)")
+        write("> ")
+        color(colors.white)
+        local keep = read()
+        if keep:lower() ~= "n" then
+            -- Keep it
+            print("")
+            color(colors.lime)
+            print("Keeping existing secret.")
+        else
+            fs.delete("/.jnet_secret")
+        end
     end
-    return false
+
+    if not fs.exists("/.jnet_secret") then
+        if isMainframe then
+            color(colors.white)
+            print("The mainframe needs a secret")
+            print("that all computers share.")
+            print("")
+            print("You can type one, or press")
+            print("ENTER to generate a random one.")
+            print("")
+            local secret = askSecret("Secret (ENTER=random)")
+            if secret == "" then
+                secret = genSecret()
+                print("")
+                color(colors.lime)
+                print("Your secret: " .. secret)
+                color(colors.yellow)
+                print("")
+                print("WRITE THIS DOWN!")
+                print("Every other computer needs")
+                print("this exact same secret.")
+                pause("Press any key to continue...")
+            end
+            local f = fs.open("/.jnet_secret", "w")
+            f.write(secret)
+            f.close()
+        else
+            color(colors.white)
+            print("Enter the shared secret from")
+            print("your mainframe.")
+            print("")
+            print("(Check the mainframe computer")
+            print("and run: type /.jnet_secret)")
+            print("")
+            local secret = ""
+            while secret == "" do
+                secret = ask("Secret", nil)
+                if secret == "" then
+                    color(colors.red)
+                    print("Secret cannot be empty!")
+                    color(colors.white)
+                end
+            end
+            local f = fs.open("/.jnet_secret", "w")
+            f.write(secret)
+            f.close()
+            print("")
+            color(colors.lime)
+            print("Secret saved!")
+        end
+    end
 end
 
 -- ============================================================
--- Broadcast Update (tell all terminals to re-install)
+-- Step 4: Download files
 -- ============================================================
 
-if mode == "broadcast" then
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.yellow)
-    term.clear()
-    term.setCursorPos(1, 1)
-
-    print("================================")
-    print("  JAVANET NETWORK UPDATE")
-    print("================================")
-    print("")
-
-    -- Open all modems
-    local modems = { peripheral.find("modem") }
-    if #modems == 0 then
-        term.setTextColor(colors.red)
-        print("No modem found!")
-        return
-    end
-    for _, modem in ipairs(modems) do
-        local name = peripheral.getName(modem)
-        if not rednet.isOpen(name) then rednet.open(name) end
-    end
-
-    term.setTextColor(colors.white)
-    print("Broadcasting update signal to")
-    print("all terminals on the network...")
-    print("")
-
-    -- Broadcast on multiple protocols so everyone hears it
-    local updateMsg = { type = "system_update", repo = REPO, ts = os.epoch("utc") }
-    rednet.broadcast(updateMsg, "JNET")
-    rednet.broadcast(updateMsg, "JNET_UPDATE")
-    rednet.broadcast(updateMsg, "JNET_ATK")
-
-    term.setTextColor(colors.lime)
-    print("Signal sent!")
-    print("")
-    term.setTextColor(colors.white)
-    print("Now updating this computer...")
-    print("")
-    sleep(1)
-
-    -- Fall through to update self
-    mode = "update"
-end
-
--- ============================================================
--- Main Installer / Updater
--- ============================================================
-
-local isUpdate = (mode == "update" or mode == "listen")
-local isMainframe = (mode == "mainframe")
-
-term.setBackgroundColor(colors.black)
-term.setTextColor(colors.yellow)
-term.clear()
-term.setCursorPos(1, 1)
-
+cls()
+color(colors.lime)
+print("================================")
 if isUpdate then
-    print("================================")
-    print("  JAVANET UPDATER")
-    print("================================")
+    print("  UPDATING FILES")
 else
-    print("================================")
-    print("  JAVANET INSTALLER")
-    print("  Mode: " .. mode)
-    print("================================")
+    print("  DOWNLOADING FILES")
 end
+print("================================")
 print("")
 
 -- Create directories
@@ -214,131 +258,117 @@ for _, dir in ipairs(dirs) do
     if not fs.exists(dir) then fs.makeDir(dir) end
 end
 
--- Build file list
-local filesToInstall = {}
-for _, f in ipairs(CORE_FILES) do filesToInstall[#filesToInstall+1] = f end
-for _, f in ipairs(NETWORK_MODULES) do filesToInstall[#filesToInstall+1] = f end
-for _, f in ipairs(OFFENSE_MODULES) do filesToInstall[#filesToInstall+1] = f end
-for _, f in ipairs(DEFENSE_MODULES) do filesToInstall[#filesToInstall+1] = f end
-for _, f in ipairs(PAYLOADS) do filesToInstall[#filesToInstall+1] = f end
+local total = #ALL_FILES
+local good = 0
+local bad = 0
 
--- Always include mainframe files (needed for updates even on terminals)
-for _, f in ipairs(MAINFRAME_FILES) do filesToInstall[#filesToInstall+1] = f end
+for i, file in ipairs(ALL_FILES) do
+    local dest = "/jnet/" .. file
+    local dir = fs.getDir(dest)
+    if not fs.exists(dir) then fs.makeDir(dir) end
+    if fs.exists(dest) then fs.delete(dest) end
 
-local total = #filesToInstall
-local installed = 0
-local failed = 0
-
-term.setTextColor(colors.white)
-print("Downloading " .. total .. " files...")
-print("")
-
-for i, file in ipairs(filesToInstall) do
-    -- Progress bar
     local pct = math.floor(i / total * 100)
-    term.setCursorPos(1, 7)
-    term.setTextColor(colors.gray)
-    term.clearLine()
-    local shortName = file
-    if #shortName > 38 then shortName = "..." .. shortName:sub(-35) end
-    term.write(shortName)
 
-    term.setCursorPos(1, 8)
+    -- Progress
+    term.setCursorPos(1, 5)
+    color(colors.gray)
     term.clearLine()
-    term.setTextColor(colors.lime)
-    local barW = 30
+    -- Shorten filename for display
+    local short = file
+    if #short > 35 then short = "..." .. short:sub(-32) end
+    term.write(short)
+
+    term.setCursorPos(1, 6)
+    term.clearLine()
+    color(colors.lime)
+    local barW = 25
     local filled = math.floor(barW * pct / 100)
     term.write("[" .. string.rep("=", filled) .. string.rep(" ", barW - filled) .. "] " .. pct .. "%")
 
-    if download(file) then
-        installed = installed + 1
+    local ok, response = pcall(http.get, REPO .. file)
+    if ok and response then
+        local content = response.readAll()
+        response.close()
+        local f = fs.open(dest, "w")
+        f.write(content)
+        f.close()
+        good = good + 1
     else
-        failed = failed + 1
-        term.setCursorPos(1, 9)
-        term.setTextColor(colors.orange)
-        term.clearLine()
-        term.write("SKIP: " .. file)
+        bad = bad + 1
     end
 end
 
 print("")
 print("")
-term.setTextColor(colors.lime)
-print("Downloaded: " .. installed .. "/" .. total)
-if failed > 0 then
-    term.setTextColor(colors.orange)
-    print("Failed: " .. failed)
+color(colors.lime)
+print("Done! " .. good .. "/" .. total .. " files.")
+if bad > 0 then
+    color(colors.orange)
+    print(bad .. " files failed to download.")
 end
+sleep(1)
 
 -- ============================================================
--- First-time setup (skip for updates)
+-- Step 5: Set startup
 -- ============================================================
 
 if not isUpdate then
-    -- Shared secret
-    if not fs.exists("/.jnet_secret") then
-        print("")
-        term.setTextColor(colors.white)
-        write("Shared secret (ENTER=random): ")
-        local secret = read("*")
-        if secret == "" then
-            secret = genSecret()
-            print("Generated: " .. secret)
-            term.setTextColor(colors.yellow)
-            print("SAVE THIS! All computers need")
-            print("the same secret.")
-        end
-        local f = fs.open("/.jnet_secret", "w")
-        f.write(secret)
-        f.close()
-    end
-
-    -- Startup
-    print("")
     if isMainframe then
         local f = fs.open("/startup.lua", "w")
         f.write('shell.run("/jnet/mainframe/mainframe.lua")')
         f.close()
-        term.setTextColor(colors.white)
-        print("Startup: mainframe")
     else
         local f = fs.open("/startup.lua", "w")
         f.write('shell.run("/jnet/customizer/customizer.lua")')
         f.close()
-        term.setTextColor(colors.white)
-        print("Startup: customizer")
     end
 end
 
 -- ============================================================
--- Done
+-- Step 6: Done!
 -- ============================================================
 
-print("")
-term.setTextColor(colors.lime)
+cls()
+color(colors.lime)
 print("================================")
+print("         ALL DONE!")
+print("================================")
+print("")
+color(colors.white)
+
 if isUpdate then
-    print("  UPDATE COMPLETE!")
+    print("Files updated!")
+    print("")
+    print("Reboot to apply.")
+elseif isMainframe then
+    print("Mainframe is ready!")
+    print("")
+    print("After reboot it will walk you")
+    print("through setting up your faction")
+    print("name, colors, zones, etc.")
+    print("")
+    print("Your computer ID is: #" .. os.getComputerID())
+    color(colors.yellow)
+    print("Other computers need this number")
+    print("to connect to the mainframe.")
 else
-    print("  JAVANET INSTALLED!")
+    print("Terminal is ready!")
+    print("")
+    print("After reboot you will pick")
+    print("which modules this terminal")
+    print("runs (door, security, etc.)")
 end
-print("================================")
+
 print("")
-term.setTextColor(colors.white)
-print("Reboot? [Y/N] (auto in 5s)")
+color(colors.yellow)
+print("Rebooting in 5 seconds...")
+print("(tap to reboot now)")
 
 local timer = os.startTimer(5)
 while true do
     local ev = {os.pullEvent()}
-    if ev[1] == "key" then
-        if ev[2] == keys.y then os.reboot() end
-        if ev[2] == keys.n then break end
-    elseif ev[1] == "char" then
-        if ev[2] == "y" or ev[2] == "Y" then os.reboot() end
-        if ev[2] == "n" or ev[2] == "N" then break end
-    elseif ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
-        os.reboot()
-    elseif ev[1] == "timer" and ev[2] == timer then
-        os.reboot()
-    end
+    if ev[1] == "timer" and ev[2] == timer then break end
+    if ev[1] == "key" or ev[1] == "mouse_click" or ev[1] == "monitor_touch" then break end
 end
+os.reboot()

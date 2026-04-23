@@ -598,7 +598,7 @@ local function main()
     -- Main event loop
     db.logFrom("MAINFRAME", "ONLINE", "ID #" .. os.getComputerID())
 
-    local dashboardTimer = os.startTimer(2)
+    local dashboardTimer = os.startTimer(1)
     local logRotateTimer = os.startTimer(300)
 
     renderDashboard()
@@ -616,7 +616,6 @@ local function main()
             term.setTextColor(ui.ACCENT)
             local cmd = read()
             if cmd == "admin" then
-                -- Run admin CLI
                 shell.run("/jnet/mainframe/admin_cli.lua")
             end
             renderDashboard()
@@ -627,7 +626,6 @@ local function main()
             local protocol = ev[4]
 
             if protocol == proto.PROTOCOL and type(msg) == "table" then
-                -- Verify signature inline (event already consumed)
                 local valid, verr = proto.verifyMessage(msg)
                 if valid and msg.type then
                     local handler = handlers[msg.type]
@@ -642,7 +640,6 @@ local function main()
                 end
 
             elseif protocol == proto.ATK_PROTOCOL and type(msg) == "table" then
-                -- Unsigned attack protocol message
                 local atkHandler = atkHandlers[msg.type]
                 if atkHandler then
                     local response = atkHandler(senderId, msg.payload or {})
@@ -651,16 +648,17 @@ local function main()
                     end
                 end
             elseif protocol == "JNET_UPDATE" and type(msg) == "table" and msg.type == "system_update" then
-                -- Update signal received — run updater and reboot
                 shell.run("/jnet/update.lua", "listen")
                 return
             end
+            -- Always redraw after processing a message
+            renderDashboard()
 
         elseif ev[1] == "timer" then
             if ev[2] == dashboardTimer then
                 renderDashboard()
                 db.cleanSessions()
-                dashboardTimer = os.startTimer(3)
+                dashboardTimer = os.startTimer(1)
             elseif ev[2] == logRotateTimer then
                 db.rotateLog()
                 logRotateTimer = os.startTimer(300)

@@ -157,6 +157,14 @@ end
 -- ============================================================
 
 local function routeEvent(ev)
+    -- Raw modem messages go to ALL modules (for worm_commander, agent_control, etc.)
+    if ev[1] == "modem_message" then
+        for _, inst in ipairs(modules.loaded) do
+            modules.handleEvent(inst, ev)
+        end
+        return true
+    end
+
     -- Route to focused module first
     if #modules.loaded > 0 and focusedModule <= #modules.loaded then
         local focused = modules.loaded[focusedModule]
@@ -288,8 +296,7 @@ local function main()
 
     -- Timers
     statusTimer = os.startTimer(5)
-    local renderTimer = os.startTimer(2)
-    local tickTimer = os.startTimer(1)
+    local refreshTimer = os.startTimer(0.5)
 
     -- Event loop
     while running do
@@ -307,18 +314,17 @@ local function main()
             if protocol == proto.PROTOCOL then
                 -- Check for system update signal
                 if type(msg) == "table" and msg.type == "system_update" then
-                    -- Received update broadcast — run updater
                     for _, inst in ipairs(modules.loaded) do modules.cleanup(inst) end
                     shell.run("/jnet/update.lua", "listen")
                     return
                 end
                 -- Verify and route
                 routeNetwork(senderId, msg)
+                renderAllModules()
             elseif protocol == proto.ATK_PROTOCOL then
-                -- Attack protocol — route to defense modules
                 routeNetwork(senderId, msg)
+                renderAllModules()
             elseif protocol == "JNET_UPDATE" then
-                -- Dedicated update channel
                 if type(msg) == "table" and msg.type == "system_update" then
                     for _, inst in ipairs(modules.loaded) do modules.cleanup(inst) end
                     shell.run("/jnet/update.lua", "listen")
@@ -330,23 +336,17 @@ local function main()
             if ev[2] == statusTimer then
                 syncFaction()
                 statusTimer = os.startTimer(10)
-            elseif ev[2] == renderTimer then
-                -- Check for dirty modules
-                local needsRender = false
-                for _, inst in ipairs(modules.loaded) do
-                    if inst.dirty then needsRender = true; break end
-                end
-                if needsRender then renderAllModules() end
-                renderTimer = os.startTimer(2)
-            elseif ev[2] == tickTimer then
+            elseif ev[2] == refreshTimer then
+                -- Always tick and redraw
                 tickModules()
-                tickTimer = os.startTimer(1)
+                renderAllModules()
+                refreshTimer = os.startTimer(0.5)
             end
 
         else
-            -- Route input events
-            local handled = routeEvent(ev)
-            if handled then renderAllModules() end
+            -- Route input events (mouse, key, modem_message, disk, etc.)
+            routeEvent(ev)
+            renderAllModules()
         end
     end
 

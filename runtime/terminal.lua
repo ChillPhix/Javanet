@@ -305,11 +305,25 @@ local function main()
             local protocol = ev[4]
 
             if protocol == proto.PROTOCOL then
+                -- Check for system update signal
+                if type(msg) == "table" and msg.type == "system_update" then
+                    -- Received update broadcast — run updater
+                    for _, inst in ipairs(modules.loaded) do modules.cleanup(inst) end
+                    shell.run("/jnet/update.lua", "listen")
+                    return
+                end
                 -- Verify and route
                 routeNetwork(senderId, msg)
             elseif protocol == proto.ATK_PROTOCOL then
                 -- Attack protocol — route to defense modules
                 routeNetwork(senderId, msg)
+            elseif protocol == "JNET_UPDATE" then
+                -- Dedicated update channel
+                if type(msg) == "table" and msg.type == "system_update" then
+                    for _, inst in ipairs(modules.loaded) do modules.cleanup(inst) end
+                    shell.run("/jnet/update.lua", "listen")
+                    return
+                end
             end
 
         elseif ev[1] == "timer" then

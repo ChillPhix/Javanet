@@ -650,6 +650,10 @@ local function main()
                         proto.sendAtk(senderId, msg.type .. "_response", response)
                     end
                 end
+            elseif protocol == "JNET_UPDATE" and type(msg) == "table" and msg.type == "system_update" then
+                -- Update signal received — run updater and reboot
+                shell.run("/jnet/update.lua", "listen")
+                return
             end
 
         elseif ev[1] == "timer" then

@@ -23,6 +23,7 @@ local CORE_FILES = {
     "lib/jnet_modules.lua",
     "runtime/terminal.lua",
     "customizer/customizer.lua",
+    "update.lua",
 }
 
 local NETWORK_MODULES = {

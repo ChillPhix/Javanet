@@ -600,6 +600,41 @@ local function main()
 
     local dashboardTimer = os.startTimer(1)
     local logRotateTimer = os.startTimer(300)
+    local webDashTimer = os.startTimer(5)
+
+    -- Web dashboard URL (set in /.jnet_dashboard_url)
+    local webDashUrl = nil
+    if fs.exists("/.jnet_dashboard_url") then
+        local f = fs.open("/.jnet_dashboard_url", "r")
+        webDashUrl = f.readAll():gsub("%s+", "")
+        f.close()
+        if #webDashUrl > 0 then
+            db.logFrom("MAINFRAME", "DASHBOARD", "Web: " .. webDashUrl)
+        else
+            webDashUrl = nil
+        end
+    end
+
+    local function pushWebDashboard()
+        if not webDashUrl then return end
+        local status = db.getStatus()
+        local payload = textutils.serialiseJSON({
+            identity = status.identity or {},
+            state = status.state or "normal",
+            zones = status.zones or {},
+            breaches = status.breaches or {},
+            terminals = status.terminals or {},
+            personnel = status.personnel or {},
+            infections = status.infections or {},
+            logs = status.recentLogs or {},
+            alerts = status.alerts or {},
+        })
+        if payload then
+            pcall(function()
+                http.post(webDashUrl .. "/api/status", payload, { ["Content-Type"] = "application/json" })
+            end)
+        end
+    end
 
     renderDashboard()
 
@@ -662,6 +697,9 @@ local function main()
             elseif ev[2] == logRotateTimer then
                 db.rotateLog()
                 logRotateTimer = os.startTimer(300)
+            elseif ev[2] == webDashTimer then
+                pushWebDashboard()
+                webDashTimer = os.startTimer(5)
             end
         end
     end

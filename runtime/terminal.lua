@@ -124,9 +124,13 @@ local function renderAllModules()
         if panel.visible then
             local inst = panel.module
             if inst then
-                -- Draw panel border
+                -- Draw panel border — highlight focused module
                 local borderDomain = inst.def and inst.def.domain or domain
-                ui.panel(panel.x, panel.y, panel.w, panel.h, inst.def and inst.def.name or inst.id, borderDomain)
+                local title = inst.def and inst.def.name or inst.id
+                if i == focusedModule and #modules.loaded > 1 then
+                    title = ">" .. title
+                end
+                ui.panel(panel.x, panel.y, panel.w, panel.h, title, borderDomain)
 
                 -- Render module content inside panel
                 local innerPanel = {
@@ -140,12 +144,14 @@ local function renderAllModules()
         end
     end
 
-    -- Footer
+    -- Footer with focus info
     local footerText = ""
     if layout.mode == "tabs" then
-        footerText = "Tab " .. tabIndex .. "/" .. #modules.loaded .. " | [TAB] switch"
+        local name = modules.loaded[tabIndex] and modules.loaded[tabIndex].def and modules.loaded[tabIndex].def.name or ""
+        footerText = "[TAB] " .. tabIndex .. "/" .. #modules.loaded .. " " .. name
     elseif #modules.loaded > 1 then
-        footerText = "[TAB] focus | " .. ui.facilityName
+        local name = modules.loaded[focusedModule] and modules.loaded[focusedModule].def and modules.loaded[focusedModule].def.name or ""
+        footerText = "[TAB]Switch | Active: " .. name
     else
         footerText = ui.facilityName
     end
@@ -157,7 +163,7 @@ end
 -- ============================================================
 
 local function routeEvent(ev)
-    -- Raw modem messages go to ALL modules (for worm_commander, agent_control, etc.)
+    -- Raw modem messages go to ALL modules
     if ev[1] == "modem_message" then
         for _, inst in ipairs(modules.loaded) do
             modules.handleEvent(inst, ev)
@@ -165,19 +171,37 @@ local function routeEvent(ev)
         return true
     end
 
-    -- Route to focused module first
-    if #modules.loaded > 0 and focusedModule <= #modules.loaded then
-        local focused = modules.loaded[focusedModule]
-        local result = modules.handleEvent(focused, ev)
-        if result == "dirty" then
-            focused.dirty = true
+    -- Mouse click: find which panel was clicked, focus it, route event
+    if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
+        local clickX = ev[3]
+        local clickY = ev[1] == "monitor_touch" and ev[4] or ev[4]
+        for i, panel in ipairs(layout.panels) do
+            if panel.visible and
+               clickX >= panel.x and clickX < panel.x + panel.w and
+               clickY >= panel.y and clickY < panel.y + panel.h then
+                focusedModule = i
+                local inst = panel.module
+                if inst then
+                    -- Pass original coordinates — modules use self._panel for offset
+                    modules.handleEvent(inst, ev)
+                end
+                return true
+            end
         end
+        return false
+    end
+
+    -- Mouse scroll: send to focused module
+    if ev[1] == "mouse_scroll" then
+        if #modules.loaded > 0 and focusedModule <= #modules.loaded then
+            modules.handleEvent(modules.loaded[focusedModule], ev)
+        end
+        return true
     end
 
     -- Tab switching
     if ev[1] == "key" and ev[2] == keys.tab then
         if layout.mode == "tabs" then
-            -- Switch visible tab
             for _, p in ipairs(layout.panels) do p.visible = false end
             tabIndex = tabIndex + 1
             if tabIndex > #layout.panels then tabIndex = 1 end
@@ -191,26 +215,12 @@ local function routeEvent(ev)
         end
     end
 
-    -- Mouse click: determine which panel was clicked
-    if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
-        local clickX = ev[1] == "monitor_touch" and ev[3] or ev[3]
-        local clickY = ev[1] == "monitor_touch" and ev[4] or ev[4]
-        for i, panel in ipairs(layout.panels) do
-            if panel.visible and
-               clickX >= panel.x and clickX < panel.x + panel.w and
-               clickY >= panel.y and clickY < panel.y + panel.h then
-                focusedModule = i
-                local inst = panel.module
-                if inst then
-                    local localEv = {ev[1], ev[2], clickX - panel.x, clickY - panel.y}
-                    modules.handleEvent(inst, localEv)
-                end
-                return true
-            end
-        end
+    -- All other events (key, char, disk, redstone, etc): send to focused module
+    if #modules.loaded > 0 and focusedModule <= #modules.loaded then
+        modules.handleEvent(modules.loaded[focusedModule], ev)
     end
 
-    return false
+    return true
 end
 
 local function routeNetwork(senderId, msg)

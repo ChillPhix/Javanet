@@ -15,7 +15,8 @@ modules.register("radio", {
         { key = "callsign", type = "string", label = "Callsign", default = "STATION" },
     },
 
-    init = function(self) self.state.messages = {} self.state.inputBuffer = "" end,
+    init = function(self)
+        self.state.scroll = 0 self.state.messages = {} self.state.inputBuffer = "" end,
 
     render = function(self, panel)
         self._panel = panel
@@ -31,6 +32,7 @@ modules.register("radio", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then
@@ -68,6 +70,7 @@ modules.register("radio", {
     end,
 
     init = function(self)
+        self.state.scroll = 0
         self.state.messages = {}
         self.state.inputBuffer = ""
         local modem = peripheral.find("modem")

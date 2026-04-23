@@ -17,6 +17,7 @@ modules.register("door_lock", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.isOpen = false
         self.state.closeTimer = nil
         local side = self.config.side or "back"
@@ -38,6 +39,7 @@ modules.register("door_lock", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         -- Listen for card_reader doorOpen state changes
         -- In practice, the runtime links card_reader state to door_lock
     end,

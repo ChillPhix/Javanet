@@ -17,7 +17,8 @@ modules.register("entity_procedures", {
         { key = "minClearance", type = "number", label = "Min clearance", default = 2 },
     },
 
-    init = function(self) self.state.unlocked = false self.state.procedures = "" end,
+    init = function(self)
+        self.state.scroll = 0 self.state.unlocked = false self.state.procedures = "" end,
 
     render = function(self, panel)
         self._panel = panel
@@ -36,6 +37,7 @@ modules.register("entity_procedures", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "disk" then
             local drive = peripheral.find("drive")
             if drive and drive.isDiskPresent() then

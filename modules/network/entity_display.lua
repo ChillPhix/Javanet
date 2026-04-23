@@ -16,7 +16,8 @@ modules.register("entity_display", {
         { key = "entityId", type = "string", label = "Entity ID" },
     },
 
-    init = function(self) self.state.entity = nil self.state.breached = false end,
+    init = function(self)
+        self.state.scroll = 0 self.state.entity = nil self.state.breached = false end,
 
     render = function(self, panel)
         self._panel = panel

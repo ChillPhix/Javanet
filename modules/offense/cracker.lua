@@ -15,6 +15,7 @@ modules.register("cracker", {
     config_fields = {},
 
     init = function(self)
+        self.state.scroll = 0
         self.state.phase = "target"
         self.state.targetId = nil
         self.state.inputBuffer = ""
@@ -39,6 +40,7 @@ modules.register("cracker", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

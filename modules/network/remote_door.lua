@@ -15,7 +15,8 @@ modules.register("remote_door", {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
     },
 
-    init = function(self) self.state.doors = {} self.state.selected = 1 end,
+    init = function(self)
+        self.state.scroll = 0 self.state.doors = {} self.state.selected = 1 end,
 
     render = function(self, panel)
         self._panel = panel
@@ -31,6 +32,7 @@ modules.register("remote_door", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

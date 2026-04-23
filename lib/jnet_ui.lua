@@ -389,13 +389,20 @@ function M.scrollList(x, y, w, h, items, selected, scroll, highlight)
     selected = selected or 1
     scroll = scroll or 0
     highlight = highlight or M.HIGHLIGHT
+
+    -- Auto-adjust scroll to keep selected visible
+    if selected > scroll + h then scroll = selected - h end
+    if selected <= scroll then scroll = selected - 1 end
+    scroll = math.max(0, math.min(#items - h, scroll))
+
     for i = 1, h do
         local idx = scroll + i
         local row = y + i - 1
-        if idx <= #items then
+        if idx >= 1 and idx <= #items then
             local text = tostring(items[idx])
+            -- Truncate to fit width
             if #text > w - 2 then text = text:sub(1, w - 3) .. "." end
-            text = " " .. text .. string.rep(" ", w - 2 - #text)
+            text = " " .. text .. string.rep(" ", math.max(0, w - 2 - #text))
             if idx == selected then
                 M.write(x, row, text, M.BG, highlight)
             else
@@ -406,6 +413,113 @@ function M.scrollList(x, y, w, h, items, selected, scroll, highlight)
         end
     end
     return scroll
+end
+
+-- ============================================================
+-- Universal Panel Content Renderer
+-- Handles scrolling, text wrapping, and bounds automatically.
+-- Modules call this instead of doing their own list rendering.
+--
+-- Usage in a module render function:
+--   local lines = { "Line 1", "Line 2", {text="colored", color=colors.red} }
+--   self.state.scroll = ui.renderPanelContent(panel, lines, self.state.scroll)
+-- ============================================================
+
+function M.renderPanelContent(panel, lines, scroll)
+    scroll = scroll or 0
+    local maxLines = panel.h
+    local w = panel.w
+
+    -- Expand lines: wrap any that exceed panel width
+    local expanded = {}
+    for _, line in ipairs(lines) do
+        local text, color, bg
+        if type(line) == "table" then
+            text = line.text or ""
+            color = line.color
+            bg = line.bg
+        else
+            text = tostring(line)
+        end
+
+        -- Word-wrap long lines
+        while #text > w do
+            local breakAt = w
+            -- Try to break at a space
+            local spaceAt = text:sub(1, w):find("%s[^%s]*$")
+            if spaceAt and spaceAt > w * 0.3 then breakAt = spaceAt end
+            expanded[#expanded+1] = { text = text:sub(1, breakAt), color = color, bg = bg }
+            text = text:sub(breakAt + 1)
+        end
+        if #text > 0 or #expanded == 0 then
+            expanded[#expanded+1] = { text = text, color = color, bg = bg }
+        end
+    end
+
+    -- Clamp scroll
+    local maxScroll = math.max(0, #expanded - maxLines)
+    scroll = math.max(0, math.min(maxScroll, scroll))
+
+    -- Render visible lines
+    for i = 1, maxLines do
+        local idx = scroll + i
+        local row = panel.y + i - 1
+        if row > panel.y + panel.h - 1 then break end
+
+        if idx >= 1 and idx <= #expanded then
+            local line = expanded[idx]
+            local displayText = line.text
+            -- Pad or truncate to panel width
+            if #displayText > w then displayText = displayText:sub(1, w) end
+            displayText = displayText .. string.rep(" ", math.max(0, w - #displayText))
+            M.write(panel.x, row, displayText, line.color or M.FG, line.bg or M.BG)
+        else
+            M.write(panel.x, row, string.rep(" ", w), M.FG, M.BG)
+        end
+    end
+
+    -- Scroll indicator if content overflows
+    if #expanded > maxLines then
+        local indicatorY = panel.y + panel.h - 1
+        local pct = scroll / math.max(1, maxScroll)
+        local indicator = " [" .. (scroll + 1) .. "-" .. math.min(scroll + maxLines, #expanded) .. "/" .. #expanded .. "]"
+        if #indicator <= w then
+            M.write(panel.x + w - #indicator, indicatorY, indicator, M.DIM, M.BG)
+        end
+    end
+
+    return scroll
+end
+
+-- Handle scroll events for a panel — call this in module handleEvent
+function M.handlePanelScroll(self, ev, totalLines)
+    if ev[1] == "mouse_scroll" then
+        self.state.scroll = (self.state.scroll or 0) + ev[2]
+        self.state.scroll = math.max(0, self.state.scroll)
+        self.dirty = true
+        return true
+    end
+    if ev[1] == "key" then
+        if ev[2] == keys.pageUp then
+            self.state.scroll = math.max(0, (self.state.scroll or 0) - 5)
+            self.dirty = true
+            return true
+        elseif ev[2] == keys.pageDown then
+            self.state.scroll = (self.state.scroll or 0) + 5
+            self.dirty = true
+            return true
+        end
+    end
+    return false
+end
+
+-- Safe text that fits in a width — truncates with ellipsis
+function M.fit(text, maxW)
+    if not text then return "" end
+    text = tostring(text)
+    if #text <= maxW then return text end
+    if maxW <= 3 then return text:sub(1, maxW) end
+    return text:sub(1, maxW - 2) .. ".."
 end
 
 -- Returns: selected index, action ("select", "back", "scroll")

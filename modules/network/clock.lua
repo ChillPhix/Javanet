@@ -12,7 +12,8 @@ modules.register("clock", {
     peripherals = {},
     config_fields = {},
 
-    init = function(self) end,
+    init = function(self)
+        self.state.scroll = 0 end,
 
     render = function(self, panel)
         self._panel = panel

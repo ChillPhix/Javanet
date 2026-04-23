@@ -17,6 +17,7 @@ modules.register("lockdown_control", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.zones = {}
         self.state.selected = 1
     end,
@@ -40,6 +41,7 @@ modules.register("lockdown_control", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         local zones = self.state.zones or {}
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]

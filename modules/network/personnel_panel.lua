@@ -15,7 +15,8 @@ modules.register("personnel_panel", {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
     },
 
-    init = function(self) self.state.count = 0 end,
+    init = function(self)
+        self.state.scroll = 0 self.state.count = 0 end,
 
     render = function(self, panel)
         self._panel = panel

@@ -15,19 +15,24 @@ modules.register("ids", {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
     },
 
-    init = function(self) self.state.alerts = {} self.state.alertCount = 0 end,
+    init = function(self)
+        self.state.scroll = 0 self.state.alerts = {} self.state.alertCount = 0 end,
 
     render = function(self, panel)
         self._panel = panel
-        local col = self.state.alertCount > 0 and ui.ERR or ui.OK
-        ui.write(panel.x, panel.y, "IDS: " .. self.state.alertCount .. " alerts", col, ui.BG)
+        local lines = {}
+        lines[#lines+1] = {text = "INTRUSION DETECTION", color = ui.FG}
+        lines[#lines+1] = {text = "Alerts: " .. #(self.state.alerts or {}), color = ui.DIM}
         local alerts = self.state.alerts or {}
-        local start = math.max(1, #alerts - (panel.h - 2))
-        for i = start, #alerts do
-            local row = panel.y + 1 + (i - start)
-            if row >= panel.y + panel.h then break end
-            ui.write(panel.x, row, ui.truncate(alerts[i], panel.w), ui.WARN, ui.BG)
+        for i = #alerts, math.max(1, #alerts - 50), -1 do
+            if alerts[i] then
+                lines[#lines+1] = {text = alerts[i], color = ui.WARN}
+            end
         end
+        if #alerts == 0 then
+            lines[#lines+1] = {text = "No alerts", color = ui.DIM}
+        end
+        self.state.scroll = ui.renderPanelContent(panel, lines, self.state.scroll)
     end,
 
     handleNetwork = function(self, senderId, msg)

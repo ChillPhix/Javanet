@@ -15,25 +15,25 @@ modules.register("zone_panel", {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
     },
 
-    init = function(self) self.state.zones = {} end,
+    init = function(self)
+        self.state.scroll = 0 self.state.zones = {} end,
 
     render = function(self, panel)
         self._panel = panel
+        local lines = {}
+        lines[#lines+1] = {text = "ZONES", color = ui.FG}
         local zones = self.state.zones or {}
         if #zones == 0 then
-            ui.write(panel.x, panel.y, "No zones", ui.DIM, ui.BG)
-            return
+            lines[#lines+1] = {text = "No zones loaded", color = ui.DIM}
+        else
+            for _, z in ipairs(zones) do
+                local status = z.locked and "[LOCKED]" or "[open]"
+                local col = z.locked and ui.ERR or ui.OK
+                local occ = z.occupants and (" (" .. #z.occupants .. ")") or ""
+                lines[#lines+1] = {text = ui.fit((z.name or "?") .. occ .. " " .. status, panel.w), color = col}
+            end
         end
-        for i, z in ipairs(zones) do
-            local row = panel.y + i - 1
-            if i > panel.h then break end
-            local lockStr = z.locked and " [LOCKED]" or ""
-            local lockCol = z.locked and ui.ERR or ui.OK
-            local occ = z.occupants and #z.occupants or 0
-            local occStr = occ > 0 and (" (" .. occ .. ")") or ""
-            local text = ui.truncate(z.name .. lockStr .. occStr, panel.w)
-            ui.write(panel.x, row, text, z.locked and ui.ERR or ui.FG, ui.BG)
-        end
+        self.state.scroll = ui.renderPanelContent(panel, lines, self.state.scroll)
     end,
 
     handleNetwork = function(self, senderId, msg)

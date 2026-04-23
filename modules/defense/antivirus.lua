@@ -12,7 +12,8 @@ modules.register("antivirus", {
     peripherals = {},
     config_fields = {},
 
-    init = function(self) self.state.threats = {} self.state.lastScan = nil end,
+    init = function(self)
+        self.state.scroll = 0 self.state.threats = {} self.state.lastScan = nil end,
 
     render = function(self, panel)
         self._panel = panel
@@ -32,6 +33,7 @@ modules.register("antivirus", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

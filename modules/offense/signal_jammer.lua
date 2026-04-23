@@ -14,7 +14,8 @@ modules.register("signal_jammer", {
         { key = "channel", type = "number", label = "Target channel", default = 65535 },
     },
 
-    init = function(self) self.state.active = false self.state.sent = 0 end,
+    init = function(self)
+        self.state.scroll = 0 self.state.active = false self.state.sent = 0 end,
 
     render = function(self, panel)
         self._panel = panel
@@ -28,6 +29,7 @@ modules.register("signal_jammer", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             -- Tap to toggle
             self.state.active = not self.state.active

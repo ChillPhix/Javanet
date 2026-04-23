@@ -17,6 +17,7 @@ modules.register("firewall", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.blocked = {}
         self.state.attempts = {}
         self.state.totalBlocked = 0

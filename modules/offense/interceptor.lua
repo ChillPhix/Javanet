@@ -15,6 +15,7 @@ modules.register("interceptor", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.captures = {}
         self.state.active = false
         self.state.captureCount = 0
@@ -35,6 +36,7 @@ modules.register("interceptor", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" or (ev[1] == "key" and ev[2] == keys.space) then
             self.state.active = not self.state.active
             if self.state.active then

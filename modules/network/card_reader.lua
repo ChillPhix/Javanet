@@ -19,6 +19,7 @@ modules.register("card_reader", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.lastResult = nil
         self.state.lastName = nil
         self.state.showResult = false
@@ -56,6 +57,7 @@ modules.register("card_reader", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "disk" then
             -- Card inserted
             local drive = peripheral.find("drive")

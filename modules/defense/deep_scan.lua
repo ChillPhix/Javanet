@@ -12,7 +12,8 @@ modules.register("deep_scan", {
     peripherals = { "modem" },
     config_fields = {},
 
-    init = function(self) self.state.detections = {} self.state.active = true end,
+    init = function(self)
+        self.state.scroll = 0 self.state.detections = {} self.state.active = true end,
 
     render = function(self, panel)
         self._panel = panel
@@ -28,6 +29,7 @@ modules.register("deep_scan", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             -- Tap to toggle
             self.state.active = not self.state.active; self.dirty = true

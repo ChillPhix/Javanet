@@ -15,24 +15,25 @@ modules.register("breach_panel", {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
     },
 
-    init = function(self) self.state.breaches = {} self.state.flash = false end,
+    init = function(self)
+        self.state.scroll = 0 self.state.breaches = {} self.state.flash = false end,
 
     render = function(self, panel)
         self._panel = panel
+        local lines = {}
         local breaches = self.state.breaches or {}
-        local count = 0
-        for _ in pairs(breaches) do count = count + 1 end
-        if count == 0 then
-            ui.write(panel.x, panel.y, "No active breaches", ui.OK, ui.BG)
-            return
+        if #breaches == 0 then
+            lines[#lines+1] = {text = "NO ACTIVE BREACHES", color = ui.OK}
+        else
+            lines[#lines+1] = {text = "!! ACTIVE BREACHES: " .. #breaches .. " !!", color = ui.ERR}
+            for _, b in ipairs(breaches) do
+                lines[#lines+1] = {text = (b.entity or "?") .. " @ " .. (b.zone or "?"), color = ui.WARN}
+                if b.severity then
+                    lines[#lines+1] = {text = "  Severity: " .. b.severity, color = ui.DIM}
+                end
+            end
         end
-        ui.write(panel.x, panel.y, "!! ACTIVE BREACHES: " .. count .. " !!", ui.ERR, ui.BG)
-        local row = panel.y + 1
-        for id, b in pairs(breaches) do
-            if row >= panel.y + panel.h then break end
-            ui.write(panel.x, row, ui.truncate("  " .. id, panel.w), ui.ERR, ui.BG)
-            row = row + 1
-        end
+        self.state.scroll = ui.renderPanelContent(panel, lines, self.state.scroll)
     end,
 
     handleNetwork = function(self, senderId, msg)

@@ -16,6 +16,7 @@ modules.register("status_panel", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.status = nil
         self.state.pollTimer = nil
     end,

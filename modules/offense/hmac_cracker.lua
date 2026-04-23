@@ -14,6 +14,7 @@ modules.register("hmac_cracker", {
     config_fields = {},
 
     init = function(self)
+        self.state.scroll = 0
         self.state.capturedMsg = nil
         self.state.running = false
         self.state.attempts = 0
@@ -37,6 +38,7 @@ modules.register("hmac_cracker", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if (ev[1] == "mouse_click" or ev[1] == "monitor_touch" or (ev[1] == "key" and ev[2] == keys.enter)) and self.state.capturedMsg and not self.state.running then
             self.state.running = true
             self.state.attempts = 0

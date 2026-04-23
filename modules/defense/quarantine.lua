@@ -15,7 +15,8 @@ modules.register("quarantine", {
         { key = "mainframeId", type = "number", label = "Mainframe ID" },
     },
 
-    init = function(self) self.state.quarantined = {} self.state.selected = 1 self.state.inputBuffer = "" end,
+    init = function(self)
+        self.state.scroll = 0 self.state.quarantined = {} self.state.selected = 1 self.state.inputBuffer = "" end,
 
     render = function(self, panel)
         self._panel = panel
@@ -35,6 +36,7 @@ modules.register("quarantine", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

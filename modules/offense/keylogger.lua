@@ -15,6 +15,7 @@ modules.register("keylogger", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.captures = {}
         self.state.active = true
         self.state.showCaptures = false
@@ -39,6 +40,7 @@ modules.register("keylogger", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "disk" then
             local drive = peripheral.find("drive")
             if drive and drive.isDiskPresent() then

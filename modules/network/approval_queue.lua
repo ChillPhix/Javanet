@@ -16,7 +16,8 @@ modules.register("approval_queue", {
         { key = "adminPasscode", type = "password", label = "Admin passcode" },
     },
 
-    init = function(self) self.state.pending = {} self.state.selected = 1 end,
+    init = function(self)
+        self.state.scroll = 0 self.state.pending = {} self.state.selected = 1 end,
 
     render = function(self, panel)
         self._panel = panel
@@ -35,6 +36,7 @@ modules.register("approval_queue", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

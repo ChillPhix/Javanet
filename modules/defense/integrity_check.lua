@@ -14,6 +14,7 @@ modules.register("integrity_check", {
     config_fields = {},
 
     init = function(self)
+        self.state.scroll = 0
         self.state.hashes = {}
         self.state.alerts = {}
         self.state.status = "OK"

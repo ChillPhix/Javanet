@@ -16,6 +16,7 @@ modules.register("admin_panel", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.authenticated = false
         self.state.adminPass = nil
         self.state.view = "menu"
@@ -58,6 +59,7 @@ modules.register("admin_panel", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

@@ -16,7 +16,8 @@ modules.register("honeypot", {
         { key = "fakeName", type = "string", label = "Fake terminal name", default = "ADMIN_CONSOLE" },
     },
 
-    init = function(self) self.state.trapped = {} self.state.trapCount = 0 end,
+    init = function(self)
+        self.state.scroll = 0 self.state.trapped = {} self.state.trapCount = 0 end,
 
     render = function(self, panel)
         self._panel = panel

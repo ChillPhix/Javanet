@@ -17,7 +17,8 @@ modules.register("player_detector", {
         { key = "range", type = "number", label = "Detection range", default = 10 },
     },
 
-    init = function(self) self.state.players = {} end,
+    init = function(self)
+        self.state.scroll = 0 self.state.players = {} end,
 
     render = function(self, panel)
         self._panel = panel

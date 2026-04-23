@@ -16,7 +16,8 @@ modules.register("siren", {
         { key = "redstoneSide", type = "string", label = "Redstone out side", default = "" },
     },
 
-    init = function(self) self.state.active = false self.state.pattern = "alert" end,
+    init = function(self)
+        self.state.scroll = 0 self.state.active = false self.state.pattern = "alert" end,
 
     render = function(self, panel)
         self._panel = panel

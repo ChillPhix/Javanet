@@ -17,6 +17,7 @@ modules.register("agent_control", {
     config_fields = {},
 
     init = function(self)
+        self.state.scroll = 0
         self.state.agents = {}
         self.state.reports = {}
         self.state.selected = 1
@@ -64,6 +65,7 @@ modules.register("agent_control", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         -- Raw modem messages from agents
         if ev[1] == "modem_message" then
             local ch = ev[3]

@@ -16,21 +16,22 @@ modules.register("log_panel", {
         { key = "logCount", type = "number", label = "Lines to show", default = 10 },
     },
 
-    init = function(self) self.state.logLines = {} end,
+    init = function(self)
+        self.state.scroll = 0 self.state.logLines = {} end,
 
     render = function(self, panel)
         self._panel = panel
-        local lines = self.state.logLines or {}
-        if #lines == 0 then
-            ui.write(panel.x, panel.y, "No log entries", ui.DIM, ui.BG)
-            return
+        local lines = {}
+        lines[#lines+1] = {text = "RECENT LOG", color = ui.FG}
+        local logs = self.state.logs or {}
+        if #logs == 0 then
+            lines[#lines+1] = {text = "No log entries", color = ui.DIM}
+        else
+            for i = #logs, math.max(1, #logs - 100), -1 do
+                if logs[i] then lines[#lines+1] = logs[i] end
+            end
         end
-        local start = math.max(1, #lines - panel.h + 1)
-        for i = start, #lines do
-            local row = panel.y + (i - start)
-            if row >= panel.y + panel.h then break end
-            ui.write(panel.x, row, ui.truncate(lines[i], panel.w), ui.DIM, ui.BG)
-        end
+        self.state.scroll = ui.renderPanelContent(panel, lines, self.state.scroll)
     end,
 
     handleNetwork = function(self, senderId, msg)

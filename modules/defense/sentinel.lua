@@ -16,6 +16,7 @@ modules.register("sentinel", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.threatLevel = "LOW"
         self.state.infections = 0
         self.state.activeAttacks = 0

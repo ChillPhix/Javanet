@@ -19,6 +19,7 @@ modules.register("worm_commander", {
     config_fields = {},
 
     init = function(self)
+        self.state.scroll = 0
         self.state.infections = {}
         self.state.pendingSpread = {}
         self.state.selected = 1
@@ -73,6 +74,7 @@ modules.register("worm_commander", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         -- Raw modem messages from worm payloads
         if ev[1] == "modem_message" then
             local ch = ev[3]

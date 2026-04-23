@@ -16,6 +16,7 @@ modules.register("card_issuer", {
     },
 
     init = function(self)
+        self.state.scroll = 0
         self.state.phase = "idle"
         self.state.message = ""
     end,
@@ -40,6 +41,7 @@ modules.register("card_issuer", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if (ev[1] == "mouse_click" or ev[1] == "monitor_touch" or (ev[1] == "key" and ev[2] == keys.enter)) and self.state.phase == "idle" then
             local drive = peripheral.find("drive")
             if drive and drive.isDiskPresent() then

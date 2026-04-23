@@ -15,6 +15,7 @@ modules.register("card_spoofer", {
     config_fields = {},
 
     init = function(self)
+        self.state.scroll = 0
         self.state.mode = "menu"
         self.state.selected = 1
         self.state.options = {"Clone Card", "Forge Card (T3)", "Burn Card (T2)"}
@@ -37,6 +38,7 @@ modules.register("card_spoofer", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if ev[1] == "mouse_click" or ev[1] == "monitor_touch" then
             local cy = ev[1] == "monitor_touch" and ev[4] or ev[4]
             if self._panel then

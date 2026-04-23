@@ -16,7 +16,8 @@ modules.register("panic_button", {
         { key = "redstoneSide", type = "string", label = "Redstone trigger side", default = "" },
     },
 
-    init = function(self) self.state.triggered = false end,
+    init = function(self)
+        self.state.scroll = 0 self.state.triggered = false end,
 
     render = function(self, panel)
         self._panel = panel
@@ -30,6 +31,7 @@ modules.register("panic_button", {
     end,
 
     handleEvent = function(self, ev)
+        ui.handlePanelScroll(self, ev)
         if (ev[1] == "mouse_click" or ev[1] == "monitor_touch") and not self.state.triggered then
             self.state.triggered = true
             local mfId = self.config.mainframeId

@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '1mb' }));
 
 // ============================================================
-// State — holds the latest data from the mainframe
+// State
 // ============================================================
 
 let facilityState = {
@@ -22,11 +22,14 @@ let facilityState = {
     infections: [],
 };
 
+// Command queue — web dashboard pushes commands, mainframe polls for them
+let commandQueue = [];
+
 // ============================================================
 // API Endpoints
 // ============================================================
 
-// Mainframe POSTs status updates here
+// Mainframe POSTs status updates — returns pending commands
 app.post('/api/status', (req, res) => {
     const data = req.body;
     if (data) {
@@ -36,12 +39,29 @@ app.post('/api/status', (req, res) => {
             lastUpdate: new Date().toISOString(),
         };
     }
-    res.json({ ok: true });
+    // Return any pending commands to the mainframe
+    const commands = [...commandQueue];
+    commandQueue = [];
+    res.json({ ok: true, commands });
 });
 
 // Dashboard GETs current state
 app.get('/api/status', (req, res) => {
     res.json(facilityState);
+});
+
+// Dashboard POSTs a command for the mainframe to execute
+app.post('/api/command', (req, res) => {
+    const cmd = req.body;
+    if (cmd && cmd.action) {
+        commandQueue.push({
+            ...cmd,
+            time: new Date().toISOString(),
+        });
+        res.json({ ok: true, queued: commandQueue.length });
+    } else {
+        res.status(400).json({ error: "Missing action" });
+    }
 });
 
 // Mainframe POSTs log entries
@@ -52,7 +72,6 @@ app.post('/api/log', (req, res) => {
             time: new Date().toISOString(),
             ...entry,
         });
-        // Keep last 200 logs
         if (facilityState.logs.length > 200) {
             facilityState.logs = facilityState.logs.slice(0, 200);
         }
@@ -76,7 +95,7 @@ app.post('/api/alert', (req, res) => {
 });
 
 // ============================================================
-// Serve dashboard HTML
+// Serve dashboard
 // ============================================================
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -84,10 +103,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// ============================================================
-// Start
-// ============================================================
 
 app.listen(PORT, () => {
     console.log(`Javanet Dashboard running on port ${PORT}`);

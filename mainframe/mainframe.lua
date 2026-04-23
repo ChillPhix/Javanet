@@ -629,10 +629,43 @@ local function main()
             logs = status.recentLogs or {},
             alerts = status.alerts or {},
         })
-        if payload then
-            pcall(function()
-                http.post(webDashUrl .. "/api/status", payload, { ["Content-Type"] = "application/json" })
-            end)
+        if not payload then return end
+
+        local ok, response = pcall(function()
+            return http.post(webDashUrl .. "/api/status", payload, { ["Content-Type"] = "application/json" })
+        end)
+
+        -- Process returned commands from web dashboard
+        if ok and response then
+            local body = response.readAll()
+            response.close()
+            if body then
+                local parsed = textutils.unserialiseJSON(body)
+                if parsed and parsed.commands then
+                    for _, cmd in ipairs(parsed.commands) do
+                        db.logFrom("WEB", "COMMAND", cmd.action or "?")
+                        if cmd.action == "set_state" and cmd.state then
+                            db.setState(cmd.state)
+                        elseif cmd.action == "lockdown_zone" and cmd.zone then
+                            db.lockdownZone(cmd.zone)
+                        elseif cmd.action == "unlock_zone" and cmd.zone then
+                            db.unlockZone(cmd.zone)
+                        elseif cmd.action == "lockdown_all" then
+                            for _, z in ipairs(db.getZones()) do
+                                db.lockdownZone(z.name)
+                            end
+                        elseif cmd.action == "unlock_all" then
+                            for _, z in ipairs(db.getZones()) do
+                                db.unlockZone(z.name)
+                            end
+                        elseif cmd.action == "declare_breach" and cmd.entity and cmd.zone then
+                            db.declareBreach(cmd.entity, cmd.zone, cmd.severity or "HIGH")
+                        elseif cmd.action == "end_breach" and cmd.id then
+                            db.endBreach(cmd.id)
+                        end
+                    end
+                end
+            end
         end
     end
 

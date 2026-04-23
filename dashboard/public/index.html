@@ -361,6 +361,60 @@ body::after {
 @media (max-width: 768px) {
     .card-wide, .card-full { grid-column: span 1; }
 }
+
+/* Control buttons */
+.ctrl-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    border: 1px solid;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+.ctrl-btn:hover { transform: translateY(-1px); filter: brightness(1.3); }
+.ctrl-btn:active { transform: translateY(0); }
+
+.ctrl-green { color: var(--green); border-color: rgba(16,185,129,0.4); }
+.ctrl-green:hover { background: rgba(16,185,129,0.15); }
+
+.ctrl-yellow { color: var(--yellow); border-color: rgba(251,191,36,0.4); }
+.ctrl-yellow:hover { background: rgba(251,191,36,0.15); }
+
+.ctrl-orange { color: var(--orange); border-color: rgba(245,158,11,0.4); }
+.ctrl-orange:hover { background: rgba(245,158,11,0.15); }
+
+.ctrl-red { color: var(--red); border-color: rgba(239,68,68,0.4); }
+.ctrl-red:hover { background: rgba(239,68,68,0.15); }
+
+.ctrl-red-solid { color: #fff; background: rgba(239,68,68,0.3); border-color: var(--red); }
+.ctrl-red-solid:hover { background: rgba(239,68,68,0.5); }
+
+.ctrl-feedback {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    z-index: 10000;
+    animation: feedbackIn 0.3s ease;
+    background: rgba(139,92,246,0.2);
+    border: 1px solid var(--purple);
+    color: var(--magenta);
+}
+
+@keyframes feedbackIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 </style>
 </head>
 <body>
@@ -459,6 +513,20 @@ body::after {
         </div>
     </div>
 
+    <!-- Controls -->
+    <div class="card card-full">
+        <div class="card-header">FACILITY CONTROLS</div>
+        <div class="card-body" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 16px;">
+            <button class="ctrl-btn ctrl-green" onclick="sendCommand('set_state', {state:'normal'})">NORMAL</button>
+            <button class="ctrl-btn ctrl-yellow" onclick="sendCommand('set_state', {state:'alert'})">ALERT</button>
+            <button class="ctrl-btn ctrl-red" onclick="sendCommand('set_state', {state:'emergency'})">EMERGENCY</button>
+            <button class="ctrl-btn ctrl-red-solid" onclick="sendCommand('set_state', {state:'lockdown'})">LOCKDOWN</button>
+            <span style="width:20px"></span>
+            <button class="ctrl-btn ctrl-orange" onclick="sendCommand('lockdown_all')">LOCK ALL ZONES</button>
+            <button class="ctrl-btn ctrl-green" onclick="sendCommand('unlock_all')">UNLOCK ALL ZONES</button>
+        </div>
+    </div>
+
     <!-- Log -->
     <div class="card card-full">
         <div class="card-header">
@@ -474,6 +542,37 @@ body::after {
 <script>
 const POLL_INTERVAL = 2000;
 let lastData = null;
+
+// Send a command to the mainframe via the server queue
+async function sendCommand(action, params) {
+    try {
+        const body = { action, ...params };
+        const res = await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (res.ok) {
+            showFeedback('COMMAND SENT: ' + action.toUpperCase());
+        } else {
+            showFeedback('COMMAND FAILED');
+        }
+    } catch (e) {
+        showFeedback('CONNECTION ERROR');
+    }
+}
+
+function showFeedback(msg) {
+    // Remove existing
+    const old = document.querySelector('.ctrl-feedback');
+    if (old) old.remove();
+
+    const el = document.createElement('div');
+    el.className = 'ctrl-feedback';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
 
 function formatTime(iso) {
     if (!iso) return '--:--:--';

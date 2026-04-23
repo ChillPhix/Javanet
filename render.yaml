@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: javanet-dashboard
+    runtime: node
+    rootDir: dashboard
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production

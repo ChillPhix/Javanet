@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAVANET — Facility Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a28;
+    --purple: #8b5cf6;
+    --purple-dim: #6d28d9;
+    --purple-glow: rgba(139, 92, 246, 0.15);
+    --magenta: #c084fc;
+    --cyan: #22d3ee;
+    --green: #10b981;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --border: #2d2d44;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+    );
+    z-index: 9999;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, var(--bg2), var(--bg3));
+    border-bottom: 2px solid var(--purple);
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--purple), var(--magenta), var(--purple), transparent);
+    animation: headerPulse 3s ease infinite;
+}
+
+@keyframes headerPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: var(--purple);
+    text-shadow: 0 0 20px var(--purple-glow), 0 0 40px rgba(139,92,246,0.1);
+}
+
+.header-subtitle {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    margin-top: 4px;
+}
+
+.header-status {
+    text-align: right;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.status-normal { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+.status-alert { background: rgba(245,158,11,0.15); color: var(--orange); border: 1px solid rgba(245,158,11,0.3); animation: alertPulse 1s ease infinite; }
+.status-emergency { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); animation: alertPulse 0.5s ease infinite; }
+.status-lockdown { background: rgba(239,68,68,0.25); color: var(--red); border: 2px solid var(--red); animation: alertPulse 0.3s ease infinite; }
+.status-offline { background: rgba(100,116,139,0.15); color: var(--text-dim); border: 1px solid var(--border); }
+
+@keyframes alertPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.last-update {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+}
+
+.connection-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: dotPulse 2s ease infinite;
+}
+
+.dot-connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot-disconnected { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+@keyframes dotPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+}
+
+/* Main grid */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 16px;
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+@media (max-width: 1200px) { .dashboard { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
+
+/* Cards */
+.card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+}
+
+.card:hover { border-color: var(--purple-dim); }
+
+.card-header {
+    background: var(--bg3);
+    padding: 12px 16px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--purple);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-count {
+    background: var(--purple-glow);
+    color: var(--magenta);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.card-body {
+    padding: 14px 16px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.card-body::-webkit-scrollbar { width: 4px; }
+.card-body::-webkit-scrollbar-track { background: var(--bg); }
+.card-body::-webkit-scrollbar-thumb { background: var(--purple-dim); border-radius: 2px; }
+
+/* Stats row */
+.stats-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    text-align: center;
+}
+
+.stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--purple);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 6px;
+    text-transform: uppercase;
+}
+
+/* Zone items */
+.zone-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(45,45,68,0.5);
+}
+
+.zone-item:last-child { border-bottom: none; }
+
+.zone-name { font-size: 13px; }
+
+.zone-status {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.zone-open { color: var(--green); background: rgba(16,185,129,0.1); }
+.zone-locked { color: var(--red); background: rgba(239,68,68,0.1); }
+
+/* Terminal items */
+.terminal-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(45,45,68,0.5);
+}
+
+.terminal-item:last-child { border-bottom: none; }
+
+.terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.terminal-online { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+.terminal-offline { background: var(--text-dim); }
+.terminal-infected { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.5); animation: alertPulse 1s ease infinite; }
+
+.terminal-name { font-size: 13px; flex: 1; }
+.terminal-id { font-size: 11px; color: var(--text-dim); }
+.terminal-modules { font-size: 10px; color: var(--purple); }
+
+/* Log items */
+.log-item {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(45,45,68,0.3);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.log-time { color: var(--text-dim); margin-right: 8px; }
+.log-source { color: var(--cyan); margin-right: 8px; font-weight: 700; }
+.log-message { color: var(--text); }
+
+/* Alert items */
+.alert-item {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    border-left: 3px solid;
+}
+
+.alert-warning { background: rgba(245,158,11,0.08); border-color: var(--orange); }
+.alert-critical { background: rgba(239,68,68,0.08); border-color: var(--red); }
+.alert-info { background: rgba(139,92,246,0.08); border-color: var(--purple); }
+
+/* Breach card */
+.breach-card {
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    animation: breachGlow 2s ease infinite;
+}
+
+@keyframes breachGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(239,68,68,0); }
+    50% { box-shadow: 0 0 15px rgba(239,68,68,0.15); }
+}
+
+.breach-entity { font-weight: 700; color: var(--red); font-size: 14px; }
+.breach-zone { color: var(--orange); font-size: 12px; }
+.breach-severity { font-size: 11px; color: var(--text-dim); }
+
+/* Empty state */
+.empty {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 30px;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* Infection items */
+.infection-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(45,45,68,0.3);
+    font-size: 12px;
+}
+
+.infection-type {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.type-worm { background: rgba(245,158,11,0.15); color: var(--orange); }
+.type-agent { background: rgba(139,92,246,0.15); color: var(--purple); }
+.type-backdoor { background: rgba(239,68,68,0.15); color: var(--red); }
+.type-lockout { background: rgba(100,116,139,0.15); color: var(--text-dim); }
+
+/* Wide cards */
+.card-wide { grid-column: span 2; }
+.card-full { grid-column: 1 / -1; }
+
+@media (max-width: 768px) {
+    .card-wide, .card-full { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="header-title" id="facilityName">J A V A N E T</div>
+        <div class="header-subtitle" id="facilitySubtitle">CONNECTING...</div>
+    </div>
+    <div class="header-status">
+        <div id="statusBadge" class="status-badge status-offline">OFFLINE</div>
+        <div class="last-update">
+            <span class="connection-dot dot-disconnected" id="connDot"></span>
+            <span id="lastUpdate">Waiting for data...</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard">
+    <!-- Stats Row -->
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card">
+            <div class="stat-value" id="statTerminals">-</div>
+            <div class="stat-label">Terminals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statZones">-</div>
+            <div class="stat-label">Zones</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statPersonnel">-</div>
+            <div class="stat-label">Personnel</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statBreaches">-</div>
+            <div class="stat-label">Breaches</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statInfections">-</div>
+            <div class="stat-label">Infections</div>
+        </div>
+    </div>
+
+    <!-- Breaches -->
+    <div class="card">
+        <div class="card-header">
+            BREACHES
+            <span class="card-count" id="breachCount">0</span>
+        </div>
+        <div class="card-body" id="breachList">
+            <div class="empty">NO ACTIVE BREACHES</div>
+        </div>
+    </div>
+
+    <!-- Zones -->
+    <div class="card">
+        <div class="card-header">
+            ZONES
+            <span class="card-count" id="zoneCount">0</span>
+        </div>
+        <div class="card-body" id="zoneList">
+            <div class="empty">AWAITING DATA</div>
+        </div>
+    </div>
+
+    <!-- Terminals -->
+    <div class="card">
+        <div class="card-header">
+            TERMINALS
+            <span class="card-count" id="terminalCount">0</span>
+        </div>
+        <div class="card-body" id="terminalList">
+            <div class="empty">AWAITING DATA</div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="card card-wide">
+        <div class="card-header">
+            ALERTS
+            <span class="card-count" id="alertCount">0</span>
+        </div>
+        <div class="card-body" id="alertList">
+            <div class="empty">NO ALERTS</div>
+        </div>
+    </div>
+
+    <!-- Infections -->
+    <div class="card">
+        <div class="card-header">
+            INFECTIONS
+            <span class="card-count" id="infectionCount">0</span>
+        </div>
+        <div class="card-body" id="infectionList">
+            <div class="empty">CLEAN</div>
+        </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card card-full">
+        <div class="card-header">
+            LIVE LOG
+            <span class="card-count" id="logCount">0</span>
+        </div>
+        <div class="card-body" id="logList" style="max-height: 250px;">
+            <div class="empty">AWAITING LOG DATA</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const POLL_INTERVAL = 2000;
+let lastData = null;
+
+function formatTime(iso) {
+    if (!iso) return '--:--:--';
+    const d = new Date(iso);
+    return d.toLocaleTimeString();
+}
+
+function timeSince(iso) {
+    if (!iso) return 'never';
+    const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (seconds < 5) return 'just now';
+    if (seconds < 60) return seconds + 's ago';
+    if (seconds < 3600) return Math.floor(seconds/60) + 'm ago';
+    return Math.floor(seconds/3600) + 'h ago';
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateDashboard(data) {
+    lastData = data;
+    const identity = data.identity || {};
+    const state = (data.state || 'offline').toLowerCase();
+
+    // Header
+    document.getElementById('facilityName').textContent = 
+        (identity.name || 'JAVANET').split('').join(' ');
+    document.getElementById('facilitySubtitle').textContent = 
+        identity.subtitle || 'FACILITY DASHBOARD';
+
+    // Status badge
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = state.toUpperCase();
+    badge.className = 'status-badge status-' + state;
+
+    // Connection
+    const dot = document.getElementById('connDot');
+    const isConnected = data.lastUpdate && (Date.now() - new Date(data.lastUpdate).getTime() < 30000);
+    dot.className = 'connection-dot ' + (isConnected ? 'dot-connected' : 'dot-disconnected');
+    document.getElementById('lastUpdate').textContent = 
+        isConnected ? 'Updated ' + timeSince(data.lastUpdate) : 'Connection lost';
+
+    // Stats
+    const zones = data.zones || [];
+    const terminals = data.terminals || [];
+    const personnel = data.personnel || [];
+    const breaches = data.breaches || [];
+    const infections = data.infections || [];
+
+    document.getElementById('statTerminals').textContent = terminals.length;
+    document.getElementById('statZones').textContent = zones.length;
+    document.getElementById('statPersonnel').textContent = 
+        Array.isArray(personnel) ? personnel.length : Object.keys(personnel).length;
+    document.getElementById('statBreaches').textContent = breaches.length;
+    document.getElementById('statInfections').textContent = infections.length;
+
+    // Color breach stat
+    document.getElementById('statBreaches').style.color = 
+        breaches.length > 0 ? '#ef4444' : '';
+
+    // Breaches
+    document.getElementById('breachCount').textContent = breaches.length;
+    const breachHtml = breaches.length === 0 
+        ? '<div class="empty">NO ACTIVE BREACHES</div>'
+        : breaches.map(b => `
+            <div class="breach-card">
+                <div class="breach-entity">${escapeHtml(b.entity || 'Unknown')}</div>
+                <div class="breach-zone">Zone: ${escapeHtml(b.zone || '?')}</div>
+                ${b.severity ? `<div class="breach-severity">Severity: ${escapeHtml(b.severity)}</div>` : ''}
+            </div>
+        `).join('');
+    document.getElementById('breachList').innerHTML = breachHtml;
+
+    // Zones
+    document.getElementById('zoneCount').textContent = zones.length;
+    const zoneHtml = zones.length === 0
+        ? '<div class="empty">NO ZONES</div>'
+        : zones.map(z => `
+            <div class="zone-item">
+                <span class="zone-name">${escapeHtml(z.name || '?')}</span>
+                <span class="zone-status ${z.locked ? 'zone-locked' : 'zone-open'}">
+                    ${z.locked ? 'LOCKED' : 'OPEN'}
+                </span>
+            </div>
+        `).join('');
+    document.getElementById('zoneList').innerHTML = zoneHtml;
+
+    // Terminals
+    document.getElementById('terminalCount').textContent = terminals.length;
+    const termHtml = terminals.length === 0
+        ? '<div class="empty">NO TERMINALS</div>'
+        : terminals.map(t => {
+            const infected = infections.some(inf => inf.computerId === t.id);
+            const dotClass = infected ? 'terminal-infected' : (t.online !== false ? 'terminal-online' : 'terminal-offline');
+            const mods = (t.modules || []).join(', ');
+            return `
+                <div class="terminal-item">
+                    <div class="terminal-dot ${dotClass}"></div>
+                    <div class="terminal-name">${escapeHtml(t.name || 'Terminal')}</div>
+                    <div class="terminal-id">#${t.id || '?'}</div>
+                </div>
+            `;
+        }).join('');
+    document.getElementById('terminalList').innerHTML = termHtml;
+
+    // Alerts
+    const alerts = data.alerts || [];
+    document.getElementById('alertCount').textContent = alerts.length;
+    const alertHtml = alerts.length === 0
+        ? '<div class="empty">NO ALERTS</div>'
+        : alerts.slice(0, 50).map(a => {
+            const level = (a.level || 'info').toLowerCase();
+            const cls = level === 'critical' ? 'alert-critical' : level === 'warning' ? 'alert-warning' : 'alert-info';
+            return `
+                <div class="alert-item ${cls}">
+                    <span style="color:var(--text-dim);font-size:10px;">${formatTime(a.time)}</span>
+                    ${escapeHtml(a.message || '')}
+                </div>
+            `;
+        }).join('');
+    document.getElementById('alertList').innerHTML = alertHtml;
+
+    // Infections
+    document.getElementById('infectionCount').textContent = infections.length;
+    const infHtml = infections.length === 0
+        ? '<div class="empty">CLEAN — NO INFECTIONS</div>'
+        : infections.map(inf => `
+            <div class="infection-item">
+                <span>#${escapeHtml(String(inf.computerId || '?'))}</span>
+                <span class="infection-type type-${(inf.type || 'unknown').toLowerCase()}">
+                    ${escapeHtml((inf.type || 'UNKNOWN').toUpperCase())}
+                </span>
+            </div>
+        `).join('');
+    document.getElementById('infectionList').innerHTML = infHtml;
+
+    // Logs
+    const logs = data.logs || [];
+    document.getElementById('logCount').textContent = logs.length;
+    const logHtml = logs.length === 0
+        ? '<div class="empty">NO LOG ENTRIES</div>'
+        : logs.slice(0, 100).map(l => `
+            <div class="log-item">
+                <span class="log-time">${formatTime(l.time)}</span>
+                <span class="log-source">${escapeHtml(l.source || '')}</span>
+                <span class="log-message">${escapeHtml(l.message || l.text || '')}</span>
+            </div>
+        `).join('');
+    document.getElementById('logList').innerHTML = logHtml;
+}
+
+// Poll for updates
+async function poll() {
+    try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+            const data = await res.json();
+            updateDashboard(data);
+        }
+    } catch (e) {
+        // Connection failed
+        document.getElementById('connDot').className = 'connection-dot dot-disconnected';
+        document.getElementById('lastUpdate').textContent = 'Dashboard offline';
+    }
+}
+
+// Start polling
+poll();
+setInterval(poll, POLL_INTERVAL);
+</script>
+</body>
+</html>
